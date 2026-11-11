@@ -1,0 +1,39 @@
+name: Build iPad app
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'PencilNotes.swiftpm/**'
+      - 'MacBuild/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - 'scripts/build_ios_unsigned.sh'
+      - 'scripts/generate_xcode_project.py'
+      - '.github/workflows/build-ios.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Test and build native iPad app
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Run portable core tests
+        run: swift test --jobs 4
+      - name: Compile and package unsigned IPA
+        run: bash scripts/build_ios_unsigned.sh
+      - name: Save unsigned app for personal sideloading
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: PencilNotes-unsigned-iPad
+          path: |
+            dist/PencilNotes-unsigned.ipa
+            dist/PencilNotes-unsigned.ipa.sha256
+          if-no-files-found: error
+          retention-days: 3

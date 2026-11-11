@@ -1,0 +1,23 @@
+// swift-tools-version: 5.9
+import PackageDescription
+import AppleProductTypes
+
+let package = Package(
+    name: "PencilNotes",
+    platforms: [.iOS("17.0")],
+    products: [
+        .iOSApplication(
+            name: "PencilNotes",
+            targets: ["AppModule"],
+            bundleIdentifier: "app.pencilnotes.personal",
+            teamIdentifier: "",
+            displayVersion: "1.0",
+            bundleVersion: "1",
+            appIcon: .placeholder(icon: .star),
+            accentColor: .presetColor(.blue),
+            supportedDeviceFamilies: [.pad],
+            supportedInterfaceOrientations: [.portrait, .landscapeLeft, .landscapeRight]
+        )
+    ],
+    targets: [.executableTarget(name: "AppModule", path: ".")]
+)
