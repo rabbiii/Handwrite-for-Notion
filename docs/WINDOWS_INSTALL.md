@@ -2,7 +2,7 @@
 
 This keeps PencilNotes as a native iPad app. GitHub supplies a macOS/Xcode build machine; your Windows PC runs AltServer to sign and install the output using your Apple account. Swift Playground is not involved. No Apple account, password, Notion token, signing certificate, or paid developer membership is needed in GitHub for this build.
 
-The delivered Windows build kit contains source and build instructions, **not an already compiled IPA**. The first successful GitHub Actions run performs the Apple SDK compilation and produces the installable-after-signing package. That build and installation have not been run from this cloud Linux machine. The original portable tests do not establish that the Apple SDK build will pass.
+The delivered Windows build kit contains source and build instructions, **not an already compiled IPA**. The first successful GitHub Actions run performs the Apple SDK compilation and produces the installable-after-signing package. The Apple SDK build has now passed in [run 43120058457](https://github.com/rabbiii/Handwrite-for-Notion/actions/runs/43120058457), which supplies the unsigned IPA artifact. Personal signing and device installation remain to be tested. If SideStore is already installed and configured, use it to import the IPA; you do not need to set up AltStore as well.
 
 ## First check: AltStore on your particular iPadOS version
 
@@ -35,7 +35,7 @@ For a public repository, GitHub currently provides standard hosted runners witho
 ## 3. Build and download the IPA
 
 1. Open the repository's **Actions** tab and enable workflows if GitHub asks.
-2. Choose **Build iPad app → Run workflow**, select your default branch, then confirm **Run workflow**. The supplied workflow is manual; uploading files alone does not start a build.
+2. Choose **Build iPad app → Run workflow**, select your default branch, then confirm **Run workflow**. The workflow supports manual runs and automatically runs when app/build inputs are pushed to main.
 3. Wait for the run to finish. It executes the portable tests, regenerates the native Xcode project from the existing App/Core sources, and calls Xcode's iPadOS device compiler. It does not use the App Playground manifest to build the app.
 4. If the run is green, open it and scroll to **Artifacts → PencilNotes-unsigned-iPad**. Download that artifact ZIP and extract **PencilNotes-unsigned.ipa** and its SHA-256 checksum. A GitHub sign-in may be required to download artifacts.
 5. If the run is red, open the failed step and copy the first compiler/build error. A failed run is not a successful IPA build. In particular, **Compile and package unsigned IPA** is the Apple SDK validation that Linux could not perform.
@@ -66,7 +66,7 @@ The free account normally allows three active sideloaded apps, including AltStor
 - `scripts/build_ios_unsigned.sh`: macOS/Xcode-only device build and IPA packaging.
 - `.github/workflows/build-ios.yml`: manual macOS workflow, portable tests, and artifact download.
 
-The project, scheme, plist, source references, workflow structure, and packaging can be checked here. Apple SDK compilation, AltStore signing, and iPadOS 27.2 runtime compatibility remain unverified until those steps actually succeed.
+The project, scheme, plist, source references, workflow structure, and packaging can be checked here. Apple SDK compilation passed in the linked run. Personal signing and iPadOS 27.2 runtime compatibility still require on-device validation.
 
 ## Sources
 

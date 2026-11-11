@@ -6,7 +6,7 @@ A personal iPad notebook built with SwiftUI and PencilKit. Write with Apple Penc
 
 The app package is **`PencilNotes.swiftpm`**. The `Package.swift` at the repository root is a separate portable test package; do not open that file as the iPad app.
 
-**Windows alternative:** [build on a GitHub cloud Mac, then install using Windows/AltServer](docs/WINDOWS_INSTALL.md). The `MacBuild` Xcode project and manual GitHub Actions workflow prepare an unsigned IPA for personal sideloading, without Swift Playground. The first successful cloud run is still needed to verify the Apple SDK build. Start by checking AltStore can run on your iPadOS version.
+**Windows alternative:** [build on a GitHub cloud Mac, then install using Windows/AltServer](docs/WINDOWS_INSTALL.md). The `MacBuild` Xcode project and manual GitHub Actions workflow prepare an unsigned IPA for personal sideloading, without Swift Playground. The first cloud build has passed; its unsigned IPA is available in the build run linked below. Start by checking AltStore can run on your iPadOS version.
 
 ## Implemented
 
@@ -17,13 +17,15 @@ The app package is **`PencilNotes.swiftpm`**. The `Package.swift` at the reposit
 - Personal Notion internal integration credentials stored in Keychain. Accessible-page search is paginated and destinations are remembered per note.
 - Official Notion file uploads and image/PDF blocks. Changed notes update their saved block. Stable caption markers and durable pending operations protect retries after an uncertain response. Changing format creates or reuses a separate block; earlier-format copies remain in Notion.
 
-No external library, OCR service, application backend, recurring subscription, or App Store distribution is required by this design. Running inside Swift Playground is the intended personal-use route; standalone installation is not promised.
+No external library, OCR service, application backend, recurring subscription, or App Store distribution is required by this design. A native IPA is now built on GitHub for personal signing with tools such as SideStore. Swift Playground remains an alternative source-project route.
 
 ## Validation status
 
 The portable core has been compiled and tested on Linux with Swift 6.2.3. Storage, API contracts with mocked URLSession responses, and sync orchestration are covered by XCTest. See [validation details](docs/VALIDATION.md).
 
-**An iPad build and real-device behavior have not been verified here.** Linux has no Apple SDK, PencilKit, UIKit, Security framework, or iPad simulator. App sources pass Swift syntax parsing, which is not Apple SDK type checking. Live Notion requests require your integration and are not covered by mocked tests. Apple documentation hosts were inaccessible from this cloud environment; the guide identifies the platform details that remain to be checked on-device. Current Notion contracts were checked against the official SDK.
+**The native iPad device build passed on GitHub’s macOS runner.** [Build run and IPA artifact](https://github.com/rabbiii/Handwrite-for-Notion/actions/runs/43120058457) (source commit `1b31caf`). Download `PencilNotes-unsigned-iPad`, extract `PencilNotes-unsigned.ipa`, and sign/install it with SideStore or another personal signing tool. GitHub sign-in is required for artifact downloads. The artifact is retained for three days; the workflow can build it again.
+
+Physical iPad installation, Pencil interactions, exports, Keychain runtime behavior, and live Notion uploads still need device validation. Successful compilation does not establish those behaviors.
 
 ## Repository layout
 

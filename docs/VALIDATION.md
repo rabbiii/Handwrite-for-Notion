@@ -24,9 +24,15 @@ An iPad launch attempt using the imported package reported **Prewarm failed** wi
 
 The archive previously inherited `0600` file modes from the cloud workspace. Packaging now explicitly writes `0644` files and `0755` directories, checks those modes, and verifies every archived file matches its input bytes. Those checks verify the rebuilt delivery, not a fix for the iPad runner. [IPAD_SETUP.md](IPAD_SETUP.md) includes a local-copy retry and a fresh, initially untouched App-template test, with instructions that preserve existing projects and notes.
 
-## Not executed here
+## GitHub macOS build
 
-- Apple SDK type checking or app compilation, App Playground import, code signing, or installation.
+[Run 43120058457](https://github.com/rabbiii/Handwrite-for-Notion/actions/runs/43120058457) for commit `1b31caf` completed successfully. The workflow ran the portable tests on macOS, compiled the actual app against Apple’s iPadOS device SDK, packaged the unsigned IPA, validated its ZIP structure and required app binary/plist entries, and uploaded artifact `13899074938` (`PencilNotes-unsigned-iPad`, displayed size 310 KB).
+
+The IPA is unsigned for personal signing with SideStore/AltStore. GitHub artifact downloads require sign-in. The local cloud environment blocks `api.github.com`, so the artifact has not been independently downloaded and inspected here; success and artifact metadata were verified on the GitHub run page.
+
+## Remaining device checks
+
+- App Playground import, personal code signing, or physical iPad installation. Apple SDK compilation passed in the GitHub run above.
 - Actual Apple Pencil/finger gestures, eraser, tool picker, undo/redo, rotation, split-view layout, and process lifecycle.
 - Rendering/inspection of PNG/PDF output, including off-paper ink, or iPad share-sheet presentation.
 - Security.framework/Keychain calls on an iPad or the persistence of an installed playground's app identity.
