@@ -25,3 +25,14 @@ struct FloatingGlass: ViewModifier {
 extension View {
     func floatingGlass() -> some View { modifier(FloatingGlass()) }
 }
+
+struct PressFeedback: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.85 : 1)
+            .opacity(configuration.isPressed ? 0.65 : 1)
+            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+    }
+}

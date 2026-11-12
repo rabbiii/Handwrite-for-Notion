@@ -89,7 +89,7 @@ final class AppModel: ObservableObject {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.timeZone = .current
-        formatter.dateFormat = "dd/MMM/yy HH:mm:ss"
+        formatter.dateFormat = "dd MMM yy  HH:mm:ss"
         let note = Note(title: formatter.string(from: Date()))
         do {
             try persist(note)
@@ -147,21 +147,32 @@ final class AppModel: ObservableObject {
     }
 
     func deleteNote(_ id: UUID) {
-        guard !isBusy, !isSyncing, notes.contains(where: { $0.id == id }) else { return }
+        _ = deleteNotes([id])
+    }
+
+    @discardableResult
+    func deleteNotes(_ ids: Set<UUID>) -> Set<UUID> {
+        guard !isBusy, !isSyncing else { return [] }
+        var deleted = Set<UUID>()
         do {
             guard let repository else { throw storageUnavailable }
-            try repository.delete(id)
-            dirty.remove(id)
-            pendingAutoSync.remove(id)
-            notes.removeAll { $0.id == id }
-            if selectedID == id {
-                autosave?.cancel()
-                syncDebouncer.cancel()
-                selectedID = nil
-                pageIndex = 0
-                if let next = notes.first { select(next.id) }
+            for note in notes.filter({ ids.contains($0.id) }) {
+                try repository.delete(note.id)
+                dirty.remove(note.id)
+                pendingAutoSync.remove(note.id)
+                notes.removeAll { $0.id == note.id }
+                deleted.insert(note.id)
             }
         } catch { report(error) }
+        if let id = selectedID, deleted.contains(id) {
+            autosave?.cancel()
+            syncDebouncer.cancel()
+            canvasInteracting = false
+            selectedID = nil
+            pageIndex = 0
+            if let next = notes.first { select(next.id) }
+        }
+        return deleted
     }
 
     func chooseDestination(_ destination: NotionPage) {
@@ -357,21 +368,40 @@ final class AppModel: ObservableObject {
     }
 
     func export() {
-        guard !isBusy, saveNow(), let note = selectedNote else { return }
-        do { sharePayload = SharePayload(files: try NoteExporter.shareFiles(note: note)) }
-        catch { report(error) }
+        guard let id = selectedID else { return }
+        shareNotes([id])
     }
 
     func exportBackup() {
-        guard !isBusy, saveNow(), let note = selectedNote else { return }
+        guard let id = selectedID else { return }
+        shareNotes([id], editableBackup: true)
+    }
+
+    func shareNotes(_ ids: Set<UUID>, editableBackup: Bool = false) {
+        guard !isBusy, !ids.isEmpty, saveNow() else { return }
+        var files: [URL] = []
+        var directories: [URL] = []
         do {
             guard let repository else { throw storageUnavailable }
-            let directory = FileManager.default.temporaryDirectory.appendingPathComponent("PencilNotes-\(UUID().uuidString)")
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            let url = directory.appendingPathComponent("\(NoteExporter.safeTitle(note.title)).pencilnote")
-            try repository.backupData(note).write(to: url, options: .atomic)
-            sharePayload = SharePayload(files: [url])
-        } catch { report(error) }
+            for note in notes.filter({ ids.contains($0.id) }) {
+                if editableBackup {
+                    let directory = FileManager.default.temporaryDirectory.appendingPathComponent("PencilNotes-\(UUID().uuidString)")
+                    directories.append(directory)
+                    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+                    let url = directory.appendingPathComponent("\(NoteExporter.safeTitle(note.title)).pencilnote")
+                    try repository.backupData(note).write(to: url, options: .atomic)
+                    files.append(url)
+                } else {
+                    let exported = try NoteExporter.shareFiles(note: note)
+                    files.append(contentsOf: exported)
+                    directories.append(contentsOf: exported.map { $0.deletingLastPathComponent() })
+                }
+            }
+            if !files.isEmpty { sharePayload = SharePayload(files: files) }
+        } catch {
+            for directory in Set(directories) { try? FileManager.default.removeItem(at: directory) }
+            report(error)
+        }
     }
 
     func importBackup(url: URL) {

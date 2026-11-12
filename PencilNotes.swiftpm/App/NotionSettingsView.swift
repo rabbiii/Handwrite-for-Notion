@@ -3,6 +3,7 @@ import SwiftUI
 struct NotionSettingsView: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @State private var token = ""
     var body: some View {
         NavigationStack {
@@ -21,29 +22,26 @@ struct NotionSettingsView: View {
                         Task { if await model.connect(token: token) { token = "" } }
                     }.disabled(token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 } footer: {
-                    Text("The token is stored only in this app’s Keychain. Never paste it into source code, notes, screenshots, or chat.")
+                    Text("Token stored securely in Keychain.")
                 }
-                Section("Set up your personal integration") {
+                Section("Notion setup") {
                     VStack(spacing: 12) {
-                        Link(destination: URL(string: "https://www.notion.so/profile/integrations")!) {
-                            integrationStep("Create internal integration ↗", detail: "Open Notion integrations · Choose your workspace")
-                        }
+                        integrationStep("Create internal integration", detail: "Choose your workspace", showsLink: true)
                         Image(systemName: "arrow.down")
                             .foregroundStyle(.secondary).accessibilityHidden(true)
-                        integrationStep("Enable permissions", detail: "Read content · Insert content · Update content")
+                        integrationStep("Enable permissions", detail: "Read · Insert · Update content")
                         Image(systemName: "arrow.down")
                             .foregroundStyle(.secondary).accessibilityHidden(true)
-                        integrationStep("Share destination page", detail: "In Notion, open the page → ••• → Connections → Add your integration")
+                        integrationStep("Connect your page", detail: "Page → ••• → Connections → Your integration")
                         Image(systemName: "arrow.down")
                             .foregroundStyle(.secondary).accessibilityHidden(true)
-                        integrationStep("Connect in this app", detail: "Copy integration token → Paste above → Connect Notion")
+                        integrationStep("Connect in this app", detail: "Paste token above → Connect Notion")
                     }
                     .padding(.vertical, 8)
-                    Text("Only pages shared with the integration can appear in search. Allow time for newly shared pages to be indexed.").font(.footnote)
+                    Text("Search shows connected pages.").font(.footnote)
                 }
                 Section("Your data") {
-                    Text("Notes and original strokes are stored on this iPad. Export an Editable Backup to Files or iCloud Drive before deleting the app or changing its project identity.")
-                    Text("Sync sends only the selected note’s title and exported image to api.notion.com. It does not enable two-way handwriting editing or upload your editable backup.")
+                    Text("Notes stay on this iPad. Sync sends a PNG and title to Notion. Export backups to keep editable ink.")
                 }
                 if model.isBusy { Section { ProgressView(model.progress) } }
                 if let message = model.errorMessage {
@@ -56,16 +54,23 @@ struct NotionSettingsView: View {
         }.interactiveDismissDisabled(model.isBusy).onDisappear { token = "" }
     }
 
-    private func integrationStep(_ title: String, detail: String) -> some View {
+    private func integrationStep(_ title: String, detail: String, showsLink: Bool = false) -> some View {
         VStack(spacing: 6) {
             Text(title).font(.headline)
             Text(detail).font(.subheadline).foregroundStyle(.secondary)
+            if showsLink {
+                Button {
+                    openURL(URL(string: "https://www.notion.so/profile/integrations")!)
+                } label: {
+                    Label("Open Notion", systemImage: "arrow.up.right")
+                }.buttonStyle(.bordered)
+            }
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity)
         .padding()
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
     }
 }
 

@@ -115,13 +115,13 @@ final class DrawingTests: XCTestCase {
         let model = AppModel(directory: directory, loadCredential: false)
         model.newNote()
         let note = try XCTUnwrap(model.selectedNote)
-        XCTAssertNotNil(note.title.range(of: #"^\d{2}/[A-Z][a-z]{2}/\d{2} \d{2}:\d{2}:\d{2}$"#, options: .regularExpression))
+        XCTAssertNotNil(note.title.range(of: #"^\d{2} [A-Z][a-z]{2} \d{2}  \d{2}:\d{2}:\d{2}$"#, options: .regularExpression))
 
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.timeZone = .current
-        formatter.dateFormat = "dd/MMM/yy HH:mm:ss"
+        formatter.dateFormat = "dd MMM yy  HH:mm:ss"
         let timestamp = try XCTUnwrap(formatter.date(from: note.title))
         XCTAssertEqual(timestamp.timeIntervalSince1970, note.createdAt.timeIntervalSince1970, accuracy: 1)
 
@@ -165,6 +165,40 @@ final class DrawingTests: XCTestCase {
         model.deleteSelected()
         XCTAssertTrue(model.notes.isEmpty)
         XCTAssertNil(model.selectedID)
+    }
+
+    func testBulkBackupAndDeleteOnlyAffectSelectedNotes() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let model = AppModel(directory: directory, loadCredential: false)
+        model.newNote()
+        let firstID = try XCTUnwrap(model.selectedID)
+        model.rename("Same title")
+        model.newNote()
+        let secondID = try XCTUnwrap(model.selectedID)
+        model.rename("Same title")
+        model.newNote()
+        let remainingID = try XCTUnwrap(model.selectedID)
+        let selected: Set<UUID> = [firstID, secondID]
+
+        model.shareNotes(selected, editableBackup: true)
+        let files = try XCTUnwrap(model.sharePayload?.files)
+        defer {
+            for file in files { try? FileManager.default.removeItem(at: file.deletingLastPathComponent()) }
+        }
+        XCTAssertEqual(files.count, 2)
+        XCTAssertEqual(Set(files).count, 2, "Duplicate titles must export independent backup files.")
+        let repository = try NoteRepository(directory: directory)
+        for file in files {
+            XCTAssertEqual(file.pathExtension, "pencilnote")
+            XCTAssertEqual(try repository.importBackup(Data(contentsOf: file)).title, "Same title")
+        }
+        XCTAssertEqual(model.selectedID, remainingID)
+        XCTAssertEqual(model.deleteNotes(selected), selected)
+        XCTAssertEqual(model.notes.map(\.id), [remainingID])
+        XCTAssertEqual(model.selectedID, remainingID)
+        XCTAssertEqual(AppModel(directory: directory, loadCredential: false).notes.map(\.id), [remainingID])
+        XCTAssertTrue(model.deleteNotes(selected).isEmpty)
     }
 
     func testClearCanvasCanBeUndoneAndRedone() async throws {

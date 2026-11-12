@@ -12,7 +12,6 @@ struct NoteEditorView: View {
     @State private var clearingCanvas = false
     @State private var resolvingSync = false
     @State private var resettingLink = false
-    @State private var showingSettings = false
 
     private var note: Note? { model.notes.first { $0.id == noteID } }
     var body: some View {
@@ -59,7 +58,6 @@ struct NoteEditorView: View {
                                     .background(model.autoSyncEnabled ? Color.primary.opacity(0.1) : .clear, in: Capsule())
                             }.accessibilityIdentifier("autoSyncButton")
                                 .accessibilityValue(model.autoSyncEnabled ? "On" : "Off")
-                            tool("Settings", "gearshape") { showingSettings = true }
                             Menu {
                                 Button("Rename note", systemImage: "pencil") { titleDraft = note.title; renaming = true }
                                 if note.sync?.pendingMarker != nil {
@@ -87,7 +85,6 @@ struct NoteEditorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)
             .sheet(isPresented: $choosingPage) { DestinationPicker() }
-            .sheet(isPresented: $showingSettings) { NotionSettingsView() }
             .alert("Rename note", isPresented: $renaming) {
                 TextField("Title", text: $titleDraft)
                 Button("Save") { model.rename(titleDraft) }
