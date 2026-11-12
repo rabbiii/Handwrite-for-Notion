@@ -63,7 +63,7 @@ final class InkController: UIViewController, PKCanvasViewDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        let background = UIColor { trait in trait.userInterfaceStyle == .dark ? UIColor(white: 25.0 / 255, alpha: 1) : .white }
+        let background = UIColor { trait in trait.userInterfaceStyle == .dark ? UIColor(red: 25.0 / 255, green: 25.0 / 255, blue: 25.0 / 255, alpha: 1) : .white }
         view.backgroundColor = background
         canvas.backgroundColor = background
         canvas.isOpaque = true
@@ -85,6 +85,10 @@ final class InkController: UIViewController, PKCanvasViewDelegate {
         actions.canvas = canvas
         actions.replaced = { [weak self] ink in
             self?.changed(ink.dataRepresentation())
+            if ink.strokes.isEmpty, let self {
+                self.logicalHeight = 2048
+                self.canvas.contentOffset = CGPoint(x: 0, y: -100)
+            }
             self?.extendIfNeeded()
         }
         picker.addObserver(canvas)

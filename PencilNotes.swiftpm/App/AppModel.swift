@@ -32,6 +32,7 @@ final class AppModel: ObservableObject {
         }
     }
     private let syncDebouncer = AutoSyncDebouncer()
+    private let imageEncoder = CanvasImageEncoder()
     private var pendingAutoSync = Set<UUID>()
     private var canvasInteracting = false
     private var sceneActive = true
@@ -47,7 +48,8 @@ final class AppModel: ObservableObject {
         return note.pages[pageIndex]
     }
 
-    init(directory: URL? = nil, loadCredential: Bool = true) {
+    init(directory: URL? = nil, loadCredential: Bool = true, notionClient: NotionClient? = nil) {
+        client = notionClient
         do {
             let noteDirectory: URL
             if let directory { noteDirectory = directory }
@@ -188,7 +190,7 @@ final class AppModel: ObservableObject {
     }
 
     func connect(token: String) async -> Bool {
-        guard !isBusy else { return false }
+        guard !isBusy, !isSyncing else { return false }
         let clean = token.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty, !clean.contains("\n") else {
             errorMessage = "Paste your Notion internal integration token into the secure field."
@@ -210,7 +212,7 @@ final class AppModel: ObservableObject {
     }
 
     func verifyConnection() async {
-        guard let client, !isBusy else { return }
+        guard let client, !isBusy, !isSyncing else { return }
         isBusy = true
         progress = "Verifying Notion connection…"
         defer { isBusy = false }
@@ -222,7 +224,7 @@ final class AppModel: ObservableObject {
     }
 
     func disconnect() {
-        guard !isBusy else { return }
+        guard !isBusy, !isSyncing else { return }
         do {
             try KeychainStore.delete()
             client = nil
@@ -285,7 +287,7 @@ final class AppModel: ObservableObject {
         do {
             let info = try await client.connection()
             maxUploadBytes = min(info.maxUploadBytes, 20 * 1024 * 1024)
-            let data = try NoteExporter.syncData(note: note, maxBytes: maxUploadBytes)
+            let data = try await imageEncoder.syncData(note: note, maxBytes: maxUploadBytes, interfaceStyle: UIScreen.main.traitCollection.userInterfaceStyle.rawValue)
             _ = try await SyncCoordinator.sync(note: note, data: data, format: .png,
                 maxBytes: maxUploadBytes, client: client, save: { [self] updated in
                     guard let index = notes.firstIndex(where: { $0.id == updated.id }) else { return }

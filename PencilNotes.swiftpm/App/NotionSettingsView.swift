@@ -39,7 +39,7 @@ struct NotionSettingsView: View {
                     Section { ErrorBanner(message: message) { model.errorMessage = nil } }
                 }
             }
-            .disabled(model.isBusy)
+            .disabled(model.isBusy || model.isSyncing)
             .navigationTitle("Notion Settings")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { token = ""; dismiss() }.disabled(model.isBusy) } }
         }.interactiveDismissDisabled(model.isBusy).onDisappear { token = "" }

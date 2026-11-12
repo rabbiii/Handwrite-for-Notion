@@ -28,7 +28,7 @@ enum NoteExporter {
         return note
     }
 
-    static var notionBackground: UIColor { UIColor(white: 25.0 / 255.0, alpha: 1) }
+    static var notionBackground: UIColor { UIColor(red: 25.0 / 255, green: 25.0 / 255, blue: 25.0 / 255, alpha: 1) }
 
     static func png(note: Note, preferredScale: CGFloat = 2) throws -> Data {
         let normalized = try continuous(note)
@@ -84,5 +84,16 @@ enum NoteExporter {
 
     private static var exportError: NSError {
         NSError(domain: "PencilNotes.Export", code: 3, userInfo: [NSLocalizedDescriptionKey: "The image could not be rendered. Your original strokes remain saved."])
+    }
+}
+
+/// Encoding a tall image can be expensive. Keep it away from Pencil input while
+/// rendering with the same appearance used by the foreground drawing surface.
+actor CanvasImageEncoder {
+    func syncData(note: Note, maxBytes: Int, interfaceStyle: Int) throws -> Data {
+        let traits = UITraitCollection(userInterfaceStyle: UIUserInterfaceStyle(rawValue: interfaceStyle) ?? .unspecified)
+        var result: Result<Data, Error>!
+        traits.performAsCurrent { result = Result { try NoteExporter.syncData(note: note, maxBytes: maxBytes) } }
+        return try result.get()
     }
 }

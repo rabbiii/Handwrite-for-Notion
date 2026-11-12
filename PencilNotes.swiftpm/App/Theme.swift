@@ -4,7 +4,7 @@ import UIKit
 enum NotebookTheme {
     static let ink = Color.primary
     static let surface = Color(uiColor: UIColor { trait in
-        trait.userInterfaceStyle == .dark ? UIColor(white: 25.0 / 255, alpha: 1) : UIColor(white: 1, alpha: 1)
+        trait.userInterfaceStyle == .dark ? UIColor(red: 25.0 / 255, green: 25.0 / 255, blue: 25.0 / 255, alpha: 1) : UIColor(white: 1, alpha: 1)
     })
     static let secondary = Color(uiColor: UIColor { trait in
         trait.userInterfaceStyle == .dark ? UIColor(white: 0.13, alpha: 1) : UIColor(white: 0.96, alpha: 1)
