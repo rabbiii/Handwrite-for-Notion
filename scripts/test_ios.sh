@@ -19,6 +19,18 @@ for error in errors[:20]:
     print('::error::'+error.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
 PY
 if [[ -d .build/ios-tests/Results.xcresult ]]; then
-  xcrun xcresulttool export attachments --path .build/ios-tests/Results.xcresult --output-path dist/UI-Previews || true
+  xcrun xcresulttool get test-results summary --path .build/ios-tests/Results.xcresult > dist/UI-Previews/test-summary.json
+  python3 - <<'PY'
+import json
+from pathlib import Path
+summary=json.loads(Path('dist/UI-Previews/test-summary.json').read_text())
+print(summary)
+assert summary.get('passedTests', 0) >= 6, 'The six native checks must actually execute and pass'
+assert summary.get('failedTests', 0) == 0, 'Native test failures remain'
+PY
+  xcrun xcresulttool export attachments --path .build/ios-tests/Results.xcresult --output-path dist/UI-Previews/attachments || true
+  pencil_container="$(xcrun simctl get_app_container "$pencil_simulator" app.pencilnotes.personal data)"
+  cp "$pencil_container/tmp/editor-light.png" dist/UI-Previews/editor-light.png
+  cp "$pencil_container/tmp/editor-dark.png" dist/UI-Previews/editor-dark.png
 fi
 exit "$pencil_status"

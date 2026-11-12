@@ -145,6 +145,8 @@ final class DrawingTests: XCTestCase {
             attachment.name = name
             attachment.lifetime = .keepAlways
             add(attachment)
+            let filename = style == .dark ? "editor-dark.png" : "editor-light.png"
+            try XCTUnwrap(image.pngData()).write(to: FileManager.default.temporaryDirectory.appendingPathComponent(filename))
         }
         window.isHidden = true
     }
