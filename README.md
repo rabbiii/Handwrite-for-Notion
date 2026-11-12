@@ -54,8 +54,8 @@ flowchart TB
         H --> I[✍️ Open<br/>PencilNotes]
     end
     SETUP --> INSTALL
-    style SETUP fill:#eff6ff,stroke:#60a5fa,color:#1e3a8a
-    style INSTALL fill:#f0fdf4,stroke:#4ade80,color:#14532d
+    style SETUP fill:#172554,stroke:#60a5fa,color:#dbeafe
+    style INSTALL fill:#052e16,stroke:#4ade80,color:#dcfce7
 ```
 
 **[Follow the short SideStore guide →](docs/SIDESTORE.md)**
