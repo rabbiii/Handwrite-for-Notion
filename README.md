@@ -16,6 +16,8 @@ Write on iPad. Keep editable ink locally. Send an image to Notion.
 
 ## 💡 Capture → organize → share
 
+[![Support PencilNotes on Patreon](https://img.shields.io/badge/Support_PencilNotes-Patreon-FF424D?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/MorsalinIslam)
+
 ```mermaid
 flowchart LR
     A[✍️ Write on iPad] --> B[💾 Save editable ink locally]
