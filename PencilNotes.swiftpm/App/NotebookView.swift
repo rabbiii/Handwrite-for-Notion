@@ -14,12 +14,11 @@ struct NotebookView: View {
     @State private var titleDraft = ""
     @State private var deleting = false
     @State private var noteToDelete: Note?
-    @State private var editMode: EditMode = .inactive
+    @State private var isEditing = false
     @State private var bulkSelection = Set<UUID>()
     @State private var deletingSelection = false
     @State private var notesToDelete = Set<UUID>()
 
-    private var isEditing: Bool { editMode.isEditing }
     private var noteAnimation: Animation { reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.35, dampingFraction: 0.85) }
 
     var body: some View {
@@ -31,11 +30,14 @@ struct NotebookView: View {
                 } else {
                     noteList
                 }
-                Button { withAnimation(noteAnimation) { model.newNote() } } label: {
-                    Label("New Note", systemImage: "plus").frame(maxWidth: .infinity).padding(.vertical, 6)
-                }.buttonStyle(.borderedProminent).tint(.primary).foregroundStyle(NotebookTheme.surface).padding().disabled(isEditing)
+                if isEditing {
+                    selectionActions
+                } else {
+                    Button { withAnimation(noteAnimation) { model.newNote() } } label: {
+                        Label("New Note", systemImage: "plus").frame(maxWidth: .infinity).padding(.vertical, 6)
+                    }.buttonStyle(.borderedProminent).tint(.primary).foregroundStyle(NotebookTheme.surface).padding()
+                }
             }
-            .safeAreaInset(edge: .bottom) { if isEditing { selectionActions } }
             .navigationTitle("PencilNotes")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -45,7 +47,13 @@ struct NotebookView: View {
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button { importingBackup = true } label: { Image(systemName: "square.and.arrow.down") }
                         .accessibilityLabel("Restore Backup")
-                    EditButton().disabled(model.notes.isEmpty)
+                    Button(isEditing ? "Done" : "Edit") {
+                        withAnimation(noteAnimation) {
+                            isEditing.toggle()
+                            bulkSelection.removeAll()
+                            if isEditing { preferredColumn = .sidebar }
+                        }
+                    }.disabled(model.notes.isEmpty)
                 }
             }
         } detail: {
@@ -58,8 +66,16 @@ struct NotebookView: View {
                 }
             }
             .animation(noteAnimation, value: model.selectedID)
+            .overlay {
+                if isEditing {
+                    Color.clear.contentShape(Rectangle()).ignoresSafeArea()
+                        .onTapGesture { finishSelecting() }
+                        .accessibilityLabel("Finish selecting notes")
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityAction { finishSelecting() }
+                }
+            }
         }
-        .environment(\.editMode, $editMode)
         .navigationSplitViewStyle(.balanced)
         .background(NotebookTheme.surface)
         .allowsHitTesting(!model.isBusy)
@@ -67,13 +83,9 @@ struct NotebookView: View {
             preferredColumn = .detail
             if id == nil { columnVisibility = .all }
         }
-        .onChange(of: editMode) { _, mode in
-            if mode.isEditing { preferredColumn = .sidebar }
-            else { bulkSelection.removeAll() }
-        }
         .onChange(of: model.notes.map(\.id)) { _, ids in
             bulkSelection.formIntersection(ids)
-            if ids.isEmpty { editMode = .inactive }
+            if ids.isEmpty { finishSelecting() }
         }
         .safeAreaInset(edge: .top, spacing: 0) {
             if let error = model.errorMessage { ErrorBanner(message: error) { model.errorMessage = nil } }
@@ -141,12 +153,19 @@ struct NotebookView: View {
     }
 
     private var noteList: some View {
-        List(selection: isEditing ? $bulkSelection : .constant(Set<UUID>())) {
+        List {
             ForEach(model.notes) { note in
                 NoteSidebarRow(note: note, isSelected: model.selectedID == note.id && !isEditing, isEditing: isEditing,
-                               onSelect: { withAnimation(noteAnimation) { model.select(note.id) } },
+                               isBulkSelected: bulkSelection.contains(note.id),
+                               onSelect: {
+                                   withAnimation(noteAnimation) {
+                                       if isEditing {
+                                           if bulkSelection.contains(note.id) { bulkSelection.remove(note.id) }
+                                           else { bulkSelection.insert(note.id) }
+                                       } else { model.select(note.id) }
+                                   }
+                               },
                                onClose: { withAnimation(noteAnimation) { model.closeNote() } })
-                    .tag(note.id)
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
@@ -155,11 +174,15 @@ struct NotebookView: View {
                             noteToDelete = note
                             deleting = true
                         } label: {
-                            Label("Delete", systemImage: "trash.fill")
-                        }.labelStyle(.iconOnly).disabled(model.isSyncing)
+                            Image(uiImage: UIImage(systemName: "trash.fill")!.withTintColor(.systemRed, renderingMode: .alwaysOriginal))
+                                .renderingMode(.original)
+                        }.tint(Color(uiColor: .secondarySystemBackground))
+                            .accessibilityLabel("Delete note").disabled(model.isSyncing || isEditing)
                         Button { startRenaming(note) } label: {
-                            Label("Rename", systemImage: "pencil")
-                        }.labelStyle(.iconOnly)
+                            Image(uiImage: UIImage(systemName: "pencil")!.withTintColor(.systemBlue, renderingMode: .alwaysOriginal))
+                                .renderingMode(.original)
+                        }.tint(Color(uiColor: .secondarySystemBackground))
+                            .accessibilityLabel("Rename note").disabled(isEditing)
                     }
             }
         }
@@ -171,10 +194,12 @@ struct NotebookView: View {
         VStack(spacing: 10) {
             Text("\(bulkSelection.count) selected").font(.caption).foregroundStyle(.secondary)
             HStack {
-                Button(bulkSelection.count == model.notes.count ? "Deselect All" : "Select All") {
-                    if bulkSelection.count == model.notes.count { bulkSelection.removeAll() }
-                    else { bulkSelection = Set(model.notes.map(\.id)) }
-                }
+                Button("Select All") { bulkSelection = Set(model.notes.map(\.id)) }
+                    .disabled(bulkSelection.count == model.notes.count)
+                Spacer()
+                Button("Unselect All") { bulkSelection.removeAll() }.disabled(bulkSelection.isEmpty)
+            }.buttonStyle(.bordered)
+            HStack {
                 Spacer()
                 Menu {
                     if bulkSelection.count == 1, let note = model.notes.first(where: { bulkSelection.contains($0.id) }) {
@@ -190,7 +215,7 @@ struct NotebookView: View {
                     deletingSelection = true
                 } label: {
                     Label("Delete", systemImage: "trash")
-                }.labelStyle(.iconOnly).disabled(bulkSelection.isEmpty || model.isSyncing)
+                }.buttonStyle(.bordered).tint(.red).disabled(bulkSelection.isEmpty || model.isSyncing)
             }
         }
         .padding().background(.bar)
@@ -201,6 +226,13 @@ struct NotebookView: View {
         titleDraft = note.title
         renaming = true
     }
+
+    private func finishSelecting() {
+        withAnimation(noteAnimation) {
+            isEditing = false
+            bulkSelection.removeAll()
+        }
+    }
 }
 
 private struct NoteSidebarRow: View {
@@ -208,6 +240,7 @@ private struct NoteSidebarRow: View {
     let note: Note
     let isSelected: Bool
     let isEditing: Bool
+    let isBulkSelected: Bool
     let onSelect: () -> Void
     let onClose: () -> Void
 
@@ -235,14 +268,19 @@ private struct NoteSidebarRow: View {
 
     private var content: some View {
         HStack(alignment: .center, spacing: 4) {
-            if isEditing {
-                noteLabel
-            } else {
-                Button(action: onSelect) { noteLabel }
-                    .buttonStyle(.plain)
-                    .accessibilityElement(children: .combine)
-                    .accessibilityAddTraits(isSelected ? .isSelected : [])
+            Button(action: onSelect) {
+                HStack(spacing: 12) {
+                    if isEditing {
+                        Image(systemName: isBulkSelected ? "checkmark.circle.fill" : "circle")
+                            .font(.title2).foregroundStyle(isBulkSelected ? Color.blue : Color.secondary)
+                            .accessibilityHidden(true)
+                    }
+                    noteLabel
+                }.contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(isSelected || isBulkSelected ? .isSelected : [])
             if isSelected {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 20)).frame(width: 24, height: 44).accessibilityHidden(true)
