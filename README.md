@@ -39,15 +39,23 @@ Requires **iPadOS 17+**. Apple Pencil is recommended. Finger drawing is availabl
 Releases contain an **unsigned IPA**. SideStore signs it using your Apple Account. A computer is needed for initial setup.
 
 ```mermaid
-flowchart TD
-    A[💻 Prepare iloader on your computer] --> B[🔌 Connect iPad by USB and trust computer]
-    B --> C[📲 Install SideStore Stable]
-    C --> D[⚙️ Trust developer and enable Developer Mode]
-    D --> E[🔗 Connect LocalDevVPN on Wi-Fi]
-    E --> F[🔄 Sign in and refresh SideStore first]
-    F --> G[⬇️ Download PencilNotes IPA to Files]
-    G --> H[➕ SideStore → My Apps → + → choose IPA]
-    H --> I[✍️ Open PencilNotes]
+flowchart TB
+    subgraph SETUP["① One-time setup"]
+        direction LR
+        A[💻 Prepare iloader<br/>on computer] --> B[🔌 Connect iPad by USB<br/>and trust computer]
+        B --> C[📲 Install<br/>SideStore Stable]
+        C --> D[⚙️ Trust developer<br/>Enable Developer Mode]
+    end
+    subgraph INSTALL["② Install PencilNotes"]
+        direction LR
+        E[🔗 Connect LocalDevVPN<br/>on Wi-Fi] --> F[🔄 Sign in and refresh<br/>SideStore first]
+        F --> G[⬇️ Download IPA<br/>to Files]
+        G --> H[➕ SideStore → My Apps<br/>+ → choose IPA]
+        H --> I[✍️ Open<br/>PencilNotes]
+    end
+    SETUP --> INSTALL
+    style SETUP fill:#eff6ff,stroke:#60a5fa,color:#1e3a8a
+    style INSTALL fill:#f0fdf4,stroke:#4ade80,color:#14532d
 ```
 
 **[Follow the short SideStore guide →](docs/SIDESTORE.md)**
