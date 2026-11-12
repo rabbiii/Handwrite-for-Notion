@@ -24,10 +24,21 @@ struct NotionSettingsView: View {
                     Text("The token is stored only in this app’s Keychain. Never paste it into source code, notes, screenshots, or chat.")
                 }
                 Section("Set up your personal integration") {
-                    Text("1. In Notion’s integration settings, create an internal integration for your workspace.")
-                    Text("2. Enable Read content, Insert content, and Update content. Copy its internal integration token into the secure field above.")
-                    Text("3. Open a destination page in Notion, use its ••• menu → Connections, and add your integration. Then return here and connect.")
-                    Link("Open Notion integrations", destination: URL(string: "https://www.notion.so/profile/integrations")!)
+                    VStack(spacing: 12) {
+                        Link(destination: URL(string: "https://www.notion.so/profile/integrations")!) {
+                            integrationStep("Create internal integration ↗", detail: "Open Notion integrations · Choose your workspace")
+                        }
+                        Image(systemName: "arrow.down")
+                            .foregroundStyle(.secondary).accessibilityHidden(true)
+                        integrationStep("Enable permissions", detail: "Read content · Insert content · Update content")
+                        Image(systemName: "arrow.down")
+                            .foregroundStyle(.secondary).accessibilityHidden(true)
+                        integrationStep("Share destination page", detail: "In Notion, open the page → ••• → Connections → Add your integration")
+                        Image(systemName: "arrow.down")
+                            .foregroundStyle(.secondary).accessibilityHidden(true)
+                        integrationStep("Connect in this app", detail: "Copy integration token → Paste above → Connect Notion")
+                    }
+                    .padding(.vertical, 8)
                     Text("Only pages shared with the integration can appear in search. Allow time for newly shared pages to be indexed.").font(.footnote)
                 }
                 Section("Your data") {
@@ -40,9 +51,21 @@ struct NotionSettingsView: View {
                 }
             }
             .disabled(model.isBusy || model.isSyncing)
-            .navigationTitle("Notion Settings")
+            .navigationTitle("Settings")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { token = ""; dismiss() }.disabled(model.isBusy) } }
         }.interactiveDismissDisabled(model.isBusy).onDisappear { token = "" }
+    }
+
+    private func integrationStep(_ title: String, detail: String) -> some View {
+        VStack(spacing: 6) {
+            Text(title).font(.headline)
+            Text(detail).font(.subheadline).foregroundStyle(.secondary)
+        }
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
     }
 }
 

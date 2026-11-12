@@ -3,8 +3,8 @@ import Foundation
 protocol NotionSyncService {
     func findBlock(pageID: String, marker: String) async throws -> String?
     func upload(data: Data, filename: String, contentType: String, maxBytes: Int, progress: @escaping (String) -> Void) async throws -> String
-    func appendFile(pageID: String, uploadID: String, format: ExportFormat, caption: String) async throws -> String
-    func updateFile(blockID: String, uploadID: String, format: ExportFormat, caption: String) async throws
+    func appendFile(pageID: String, uploadID: String, format: ExportFormat, caption: String, captionLink: URL?) async throws -> String
+    func updateFile(blockID: String, uploadID: String, format: ExportFormat, caption: String, captionLink: URL?) async throws
 }
 
 extension NotionClient: NotionSyncService {}
@@ -22,6 +22,8 @@ enum SyncError: LocalizedError {
 
 @MainActor
 enum SyncCoordinator {
+    static let captionVersion = 1
+
     static func marker(noteID: UUID, format: ExportFormat) -> String {
         "PencilNotes:\(noteID.uuidString):\(format.rawValue)"
     }
@@ -41,7 +43,8 @@ enum SyncCoordinator {
         if state.destinationID != destination.id || (state.format != nil && state.format != format) {
             state = SyncState(destinationID: destination.id)
         }
-        if state.blockID != nil && state.revision == note.revision && state.format == format && state.pendingMarker == nil {
+        if state.blockID != nil && state.revision == note.revision && state.format == format
+            && state.pendingMarker == nil && state.captionVersion == captionVersion {
             progress("Already synced — no changes to upload.")
             return note
         }
@@ -54,11 +57,18 @@ enum SyncCoordinator {
         let uploadID = try await client.upload(data: data, filename: "PencilNotes-\(note.id.uuidString).\(format.rawValue)",
                                                contentType: format == .png ? "image/png" : "application/pdf",
                                                maxBytes: maxBytes, progress: progress)
-        let caption = "\(note.title) · \(tag)"
+        // Keep recovery identity in the title's link, outside its visible text.
+        var link = URLComponents()
+        link.scheme = "https"
+        link.host = "www.notion.so"
+        link.path = "/\(destination.id)"
+        link.queryItems = [URLQueryItem(name: "pencilnotes", value: tag)]
+        guard let captionLink = link.url else { throw NotionError.invalidInput("The Notion caption link is invalid.") }
+        let caption = note.title
         if let blockID = state.blockID {
             progress("Updating your Notion block…")
             // Updating a known block is retryable: it replaces that block, never appends another.
-            try await client.updateFile(blockID: blockID, uploadID: uploadID, format: format, caption: caption)
+            try await client.updateFile(blockID: blockID, uploadID: uploadID, format: format, caption: caption, captionLink: captionLink)
         } else {
             state.pendingMarker = tag
             note.sync = state
@@ -66,7 +76,7 @@ enum SyncCoordinator {
             try save(note)
             progress("Adding the file to your Notion page…")
             do {
-                state.blockID = try await client.appendFile(pageID: destination.id, uploadID: uploadID, format: format, caption: caption)
+                state.blockID = try await client.appendFile(pageID: destination.id, uploadID: uploadID, format: format, caption: caption, captionLink: captionLink)
             } catch {
                 if let apiError = error as? NotionError, !apiError.isAmbiguousMutation {
                     state.pendingMarker = nil
@@ -78,6 +88,7 @@ enum SyncCoordinator {
         }
         state.pendingMarker = nil
         state.revision = note.revision
+        state.captionVersion = captionVersion
         note.sync = state
         try save(note)
         progress("Synced to \(destination.title).")

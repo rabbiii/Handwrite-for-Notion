@@ -39,19 +39,22 @@ struct SyncState: Codable, Equatable {
     var pendingMarker: String?
     var revision: UUID?
     var format: ExportFormat?
+    var captionVersion: Int?
 
     init(
         destinationID: String,
         blockID: String? = nil,
         pendingMarker: String? = nil,
         revision: UUID? = nil,
-        format: ExportFormat? = nil
+        format: ExportFormat? = nil,
+        captionVersion: Int? = nil
     ) {
         self.destinationID = destinationID
         self.blockID = blockID
         self.pendingMarker = pendingMarker
         self.revision = revision
         self.format = format
+        self.captionVersion = captionVersion
     }
 }
 

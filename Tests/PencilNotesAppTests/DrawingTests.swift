@@ -51,9 +51,122 @@ final class DrawingTests: XCTestCase {
         model.drawingChanged(ink(y: 4000).dataRepresentation(), pageID: page.id)
         XCTAssertTrue(model.saveNow())
         let reopened = AppModel(directory: directory, loadCredential: false)
+        XCTAssertNil(reopened.selectedID)
+        XCTAssertNil(reopened.selectedNote)
+        let saved = try XCTUnwrap(reopened.notes.first)
+        reopened.select(saved.id)
         let note = try XCTUnwrap(reopened.selectedNote)
         XCTAssertGreaterThan(try NoteExporter.drawing(note.pages[0].drawing).bounds.maxY, 3900)
     }
+
+    func testCloseNoteSavesInkAndReturnsToHome() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let model = AppModel(directory: directory, loadCredential: false)
+        XCTAssertNil(model.selectedID)
+        model.newNote()
+        let noteID = try XCTUnwrap(model.selectedID)
+        let page = try XCTUnwrap(model.selectedPage)
+        let drawing = ink(y: 600).dataRepresentation()
+        model.drawingChanged(drawing, pageID: page.id)
+        model.closeNote()
+
+        XCTAssertNil(model.selectedID)
+        XCTAssertNil(model.selectedNote)
+        XCTAssertNil(model.selectedPage)
+        XCTAssertEqual(model.pageIndex, 0)
+        XCTAssertEqual(model.notes.map(\.id), [noteID])
+        let reopened = AppModel(directory: directory, loadCredential: false)
+        XCTAssertNil(reopened.selectedID)
+        XCTAssertEqual(reopened.notes.first?.pages.first?.drawing, drawing)
+        reopened.select(noteID)
+        XCTAssertEqual(reopened.selectedPage?.drawing, drawing)
+    }
+
+    func testCloseNoteKeepsCanvasOpenWhenSavingFails() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let model = AppModel(directory: directory, loadCredential: false)
+        model.newNote()
+        let noteID = try XCTUnwrap(model.selectedID)
+        let page = try XCTUnwrap(model.selectedPage)
+        let drawing = ink(y: 700).dataRepresentation()
+        model.drawingChanged(drawing, pageID: page.id)
+        // Block writes by replacing this test's storage directory with a file.
+        try FileManager.default.removeItem(at: directory)
+        try Data().write(to: directory)
+        model.closeNote()
+
+        XCTAssertEqual(model.selectedID, noteID)
+        XCTAssertEqual(model.selectedPage?.drawing, drawing)
+        XCTAssertNotNil(model.errorMessage)
+
+        try FileManager.default.removeItem(at: directory)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        model.closeNote()
+        XCTAssertNil(model.selectedID)
+        let reopened = AppModel(directory: directory, loadCredential: false)
+        XCTAssertEqual(reopened.notes.first?.pages.first?.drawing, drawing)
+    }
+
+    func testNewNoteUsesLocalTimestampTitle() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let model = AppModel(directory: directory, loadCredential: false)
+        model.newNote()
+        let note = try XCTUnwrap(model.selectedNote)
+        XCTAssertNotNil(note.title.range(of: #"^\d{2}/[A-Z][a-z]{2}/\d{2} \d{2}:\d{2}:\d{2}$"#, options: .regularExpression))
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = .current
+        formatter.dateFormat = "dd/MMM/yy HH:mm:ss"
+        let timestamp = try XCTUnwrap(formatter.date(from: note.title))
+        XCTAssertEqual(timestamp.timeIntervalSince1970, note.createdAt.timeIntervalSince1970, accuracy: 1)
+
+        let reopened = AppModel(directory: directory, loadCredential: false)
+        XCTAssertNil(reopened.selectedID)
+        XCTAssertEqual(reopened.notes.first?.title, note.title)
+    }
+
+    func testSidebarActionsKeepTheirTargetWhenSelectionChanges() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let model = AppModel(directory: directory, loadCredential: false)
+        model.newNote()
+        let firstID = try XCTUnwrap(model.selectedID)
+        model.newNote()
+        let secondID = try XCTUnwrap(model.selectedID)
+
+        model.rename("Renamed from sidebar", noteID: firstID)
+        XCTAssertEqual(model.selectedID, secondID)
+        XCTAssertEqual(model.notes.first(where: { $0.id == firstID })?.title, "Renamed from sidebar")
+        let reopened = AppModel(directory: directory, loadCredential: false)
+        XCTAssertEqual(reopened.notes.first(where: { $0.id == firstID })?.title, "Renamed from sidebar")
+
+        let page = try XCTUnwrap(model.selectedPage)
+        let drawing = ink(y: 300).dataRepresentation()
+        model.drawingChanged(drawing, pageID: page.id)
+        model.deleteNote(firstID)
+        model.deleteNote(firstID)
+        XCTAssertEqual(model.selectedID, secondID)
+        XCTAssertEqual(model.selectedPage?.drawing, drawing)
+        XCTAssertTrue(model.saveNow())
+        XCTAssertEqual(model.notes.map(\.id), [secondID])
+        let afterDelete = AppModel(directory: directory, loadCredential: false)
+        XCTAssertEqual(afterDelete.notes.map(\.id), [secondID])
+        XCTAssertNil(afterDelete.selectedID)
+        XCTAssertEqual(afterDelete.notes.first?.pages.first?.drawing, drawing)
+
+        model.newNote()
+        model.deleteSelected()
+        XCTAssertEqual(model.selectedID, secondID)
+        model.deleteSelected()
+        XCTAssertTrue(model.notes.isEmpty)
+        XCTAssertNil(model.selectedID)
+    }
+
     func testClearCanvasCanBeUndoneAndRedone() async throws {
         let actions = CanvasActions()
         let controller = InkController(data: ink(y: 200).dataRepresentation(), fingerDrawing: false, actions: actions, changed: { _ in }, interaction: { _ in })

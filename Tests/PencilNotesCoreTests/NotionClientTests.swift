@@ -203,32 +203,65 @@ final class NotionClientTests: XCTestCase {
     }
 
     func testAppendThenUpdateUsesOfficialBlockBodies() async throws {
-        var calls = 0
-        NotionStubProtocol.handler = { request in
-            calls += 1
-            XCTAssertEqual(request.httpMethod, "PATCH")
-            let body = try Self.jsonBody(request)
-            if calls == 1 {
-                XCTAssertEqual(request.url?.path, "/v1/blocks/page-1/children")
-                let children = try XCTUnwrap(body["children"] as? [[String: Any]])
-                XCTAssertEqual(children.count, 1)
-                XCTAssertEqual(children[0]["type"] as? String, "pdf")
-                let pdf = try XCTUnwrap(children[0]["pdf"] as? [String: Any])
-                XCTAssertEqual(pdf["type"] as? String, "file_upload")
-                XCTAssertEqual((pdf["file_upload"] as? [String: String])?["id"], "upload-1")
-                return try Self.reply(request, ["results": [["id": "block-1"]]])
+        let captionLink = URL(string: "https://www.notion.so/page-1?pencilnotes=PencilNotes%3Anote-id%3Apng")!
+        for format in [ExportFormat.png, .pdf] {
+            let type = format == .png ? "image" : "pdf"
+            var calls = 0
+            NotionStubProtocol.handler = { request in
+                calls += 1
+                XCTAssertEqual(request.httpMethod, "PATCH")
+                let body = try Self.jsonBody(request)
+                if calls == 1 {
+                    XCTAssertEqual(request.url?.path, "/v1/blocks/page-1/children")
+                    let children = try XCTUnwrap(body["children"] as? [[String: Any]])
+                    XCTAssertEqual(children.count, 1)
+                    XCTAssertEqual(children[0]["type"] as? String, type)
+                    let media = try XCTUnwrap(children[0][type] as? [String: Any])
+                    XCTAssertEqual(media["type"] as? String, "file_upload")
+                    XCTAssertEqual((media["file_upload"] as? [String: String])?["id"], "upload-1")
+                    let caption = try XCTUnwrap(media["caption"] as? [[String: Any]])
+                    XCTAssertEqual(caption.count, 1)
+                    let text = try XCTUnwrap(caption.first?["text"] as? [String: Any])
+                    XCTAssertEqual(text["content"] as? String, "Title")
+                    XCTAssertEqual((text["link"] as? [String: String])?["url"], captionLink.absoluteString)
+                    return try Self.reply(request, ["results": [["id": "block-1"]]])
+                }
+                XCTAssertEqual(request.url?.path, "/v1/blocks/block-1")
+                XCTAssertNil(body["children"])
+                let media = try XCTUnwrap(body[type] as? [String: Any])
+                XCTAssertNil(media["type"])
+                XCTAssertEqual((media["file_upload"] as? [String: String])?["id"], "upload-2")
+                let caption = try XCTUnwrap(media["caption"] as? [[String: Any]])
+                XCTAssertEqual(caption.count, 1)
+                let text = try XCTUnwrap(caption.first?["text"] as? [String: Any])
+                XCTAssertEqual(text["content"] as? String, "Updated")
+                XCTAssertEqual((text["link"] as? [String: String])?["url"], captionLink.absoluteString)
+                return try Self.reply(request, ["id": "block-1"])
             }
-            XCTAssertEqual(request.url?.path, "/v1/blocks/block-1")
-            XCTAssertNil(body["children"])
-            let pdf = try XCTUnwrap(body["pdf"] as? [String: Any])
-            XCTAssertNil(pdf["type"])
-            XCTAssertEqual((pdf["file_upload"] as? [String: String])?["id"], "upload-2")
-            return try Self.reply(request, ["id": "block-1"])
+            let id = try await client.appendFile(pageID: "page-1", uploadID: "upload-1", format: format, caption: "Title", captionLink: captionLink)
+            XCTAssertEqual(id, "block-1")
+            try await client.updateFile(blockID: id, uploadID: "upload-2", format: format, caption: "Updated", captionLink: captionLink)
+            XCTAssertEqual(calls, 2)
         }
-        let id = try await client.appendFile(pageID: "page-1", uploadID: "upload-1", format: .pdf, caption: "Title · PencilNotes:note-id")
-        XCTAssertEqual(id, "block-1")
-        try await client.updateFile(blockID: id, uploadID: "upload-2", format: .pdf, caption: "Updated · PencilNotes:note-id")
-        XCTAssertEqual(calls, 2)
+    }
+
+    func testFindBlockReadsLinkMetadataWithoutMatchingSameTitleOrArchivedBlocks() async throws {
+        let marker = "PencilNotes:note-id:png"
+        let url = "https://www.notion.so/page-1?pencilnotes=PencilNotes%3Anote-id%3Apng"
+        for hrefOnly in [false, true] {
+            let caption: [String: Any] = hrefOnly
+                ? ["plain_text": "Title", "href": url]
+                : ["text": ["content": "Title", "link": ["url": url]]]
+            NotionStubProtocol.handler = { request in
+                try Self.reply(request, ["has_more": false, "results": [
+                    ["id": "same-title", "type": "image", "image": ["caption": [["plain_text": "Title"]]]],
+                    ["id": "archived", "archived": true, "type": "image", "image": ["caption": [caption]]],
+                    ["id": "found", "type": "image", "image": ["caption": [caption]]]
+                ]])
+            }
+            let id = try await client.findBlock(pageID: "page-1", marker: marker)
+            XCTAssertEqual(id, "found")
+        }
     }
 
     func testMutationServerFailureIsAmbiguousAndNeverAutomaticallyRetried() async throws {

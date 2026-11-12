@@ -72,7 +72,6 @@ final class AppModel: ObservableObject {
                     storageIssues.append("“\(original.title)” could not be opened or upgraded: \(error.localizedDescription) Its original files are preserved.")
                 }
             }
-            if let first = notes.first(where: { $0.canvasVersion == 2 && (try? NoteExporter.validate($0)) != nil }) { selectedID = first.id }
         } catch {
             errorMessage = "Local storage is unavailable: \(error.localizedDescription)"
         }
@@ -86,7 +85,12 @@ final class AppModel: ObservableObject {
 
     func newNote() {
         guard !isBusy, saveNow() else { return }
-        let note = Note()
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = .current
+        formatter.dateFormat = "dd/MMM/yy HH:mm:ss"
+        let note = Note(title: formatter.string(from: Date()))
         do {
             try persist(note)
             notes.insert(note, at: 0)
@@ -112,13 +116,21 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func rename(_ title: String) {
+    func closeNote() {
+        guard !isBusy, selectedID != nil, saveNow() else { return }
+        canvasInteracting = false
+        selectedID = nil
+        pageIndex = 0
+        schedulePendingSync()
+    }
+
+    func rename(_ title: String, noteID: UUID? = nil) {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, trimmed.count <= 200 else {
             errorMessage = "Use a title between 1 and 200 characters."
             return
         }
-        change { $0.title = trimmed }
+        change(noteID: noteID) { $0.title = trimmed }
         _ = saveNow()
     }
 
@@ -130,16 +142,25 @@ final class AppModel: ObservableObject {
     }
 
     func deleteSelected() {
-        guard !isBusy, !isSyncing, let id = selectedID else { return }
+        guard let id = selectedID else { return }
+        deleteNote(id)
+    }
+
+    func deleteNote(_ id: UUID) {
+        guard !isBusy, !isSyncing, notes.contains(where: { $0.id == id }) else { return }
         do {
             guard let repository else { throw storageUnavailable }
             try repository.delete(id)
-            autosave?.cancel()
             dirty.remove(id)
+            pendingAutoSync.remove(id)
             notes.removeAll { $0.id == id }
-            selectedID = nil
-            pageIndex = 0
-            if let next = notes.first { select(next.id) }
+            if selectedID == id {
+                autosave?.cancel()
+                syncDebouncer.cancel()
+                selectedID = nil
+                pageIndex = 0
+                if let next = notes.first { select(next.id) }
+            }
         } catch { report(error) }
     }
 
@@ -268,7 +289,8 @@ final class AppModel: ObservableObject {
         if automatic && (!autoSyncEnabled || autoSyncPaused || canvasInteracting) { return }
         pendingAutoSync.remove(id)
         if note.sync?.revision == note.revision, note.sync?.format == .png,
-           note.sync?.destinationID == note.destination?.id, note.sync?.blockID != nil, note.sync?.pendingMarker == nil {
+           note.sync?.destinationID == note.destination?.id, note.sync?.blockID != nil, note.sync?.pendingMarker == nil,
+           note.sync?.captionVersion == SyncCoordinator.captionVersion {
             if !automatic { progress = "Up to date" }
             schedulePendingSync()
             return
@@ -319,7 +341,8 @@ final class AppModel: ObservableObject {
         guard sceneActive, autoSyncEnabled, !autoSyncPaused, !canvasInteracting, !isSyncing, client != nil else { return }
         pendingAutoSync = pendingAutoSync.filter { id in
             guard let note = notes.first(where: { $0.id == id }), note.destination != nil else { return false }
-            return note.sync?.revision != note.revision || note.sync?.format != .png || note.sync?.destinationID != note.destination?.id
+            return note.sync?.revision != note.revision || note.sync?.format != .png
+                || note.sync?.destinationID != note.destination?.id || note.sync?.captionVersion != SyncCoordinator.captionVersion
         }
         guard !pendingAutoSync.isEmpty else { return }
         let delay = max(0, 0.5 - Date().timeIntervalSince(lastCanvasActivity))
@@ -369,8 +392,9 @@ final class AppModel: ObservableObject {
     }
 
     private var selectedIndex: Int? { notes.firstIndex { $0.id == selectedID } }
-    private func change(_ edit: (inout Note) -> Void) {
-        guard !isBusy, let index = selectedIndex else { return }
+    private func change(noteID: UUID? = nil, _ edit: (inout Note) -> Void) {
+        guard !isBusy, let id = noteID ?? selectedID,
+              let index = notes.firstIndex(where: { $0.id == id }) else { return }
         edit(&notes[index])
         notes[index].revision = UUID()
         notes[index].updatedAt = Date()

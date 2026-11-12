@@ -163,7 +163,7 @@ final class NotionClient {
         return uploadID
     }
 
-    /// A stable caption marker recovers a block after an interrupted append response.
+    /// Match title-link metadata and legacy visible markers after an interrupted append.
     func findBlock(pageID: String, marker: String) async throws -> String? {
         try Self.validateID(pageID)
         guard !marker.isEmpty else { throw NotionError.invalidInput("The saved sync marker is missing.") }
@@ -178,7 +178,7 @@ final class NotionClient {
                 guard block["in_trash"] as? Bool != true, block["archived"] as? Bool != true,
                       let type = block["type"] as? String, ["image", "pdf"].contains(type),
                       let content = block[type] as? [String: Any], let caption = content["caption"] as? [[String: Any]],
-                      Self.richText(caption).contains(marker), let id = block["id"] as? String, !id.isEmpty else { continue }
+                      Self.captionContainsMarker(caption, marker: marker), let id = block["id"] as? String, !id.isEmpty else { continue }
                 return id
             }
             cursor = try Self.nextCursor(json, seen: &cursors)
@@ -186,11 +186,11 @@ final class NotionClient {
         return nil
     }
 
-    func appendFile(pageID: String, uploadID: String, format: ExportFormat, caption: String) async throws -> String {
+    func appendFile(pageID: String, uploadID: String, format: ExportFormat, caption: String, captionLink: URL? = nil) async throws -> String {
         try Self.validateID(pageID)
         try Self.validateID(uploadID)
         let type = format == .png ? "image" : "pdf"
-        let media = try Self.media(uploadID: uploadID, caption: caption, includeType: true)
+        let media = try Self.media(uploadID: uploadID, caption: caption, captionLink: captionLink, includeType: true)
         let json = try await request(path: "blocks/\(pageID)/children", method: "PATCH", json: [
             "children": [["object": "block", "type": type, type: media]]
         ], mutation: true)
@@ -199,12 +199,12 @@ final class NotionClient {
         return id
     }
 
-    func updateFile(blockID: String, uploadID: String, format: ExportFormat, caption: String) async throws {
+    func updateFile(blockID: String, uploadID: String, format: ExportFormat, caption: String, captionLink: URL? = nil) async throws {
         try Self.validateID(blockID)
         try Self.validateID(uploadID)
         let type = format == .png ? "image" : "pdf"
         let json = try await request(path: "blocks/\(blockID)", method: "PATCH", json: [
-            type: try Self.media(uploadID: uploadID, caption: caption, includeType: false)
+            type: try Self.media(uploadID: uploadID, caption: caption, captionLink: captionLink, includeType: false)
         ], mutation: true)
         guard json["id"] as? String == blockID else { throw NotionError.invalidResponse(mutation: true) }
     }
@@ -258,9 +258,23 @@ final class NotionClient {
         return decoded
     }
 
-    private static func media(uploadID: String, caption: String, includeType: Bool) throws -> [String: Any] {
+    private static func captionContainsMarker(_ caption: [[String: Any]], marker: String) -> Bool {
+        if richText(caption).contains(marker) { return true }
+        return caption.contains { item in
+            let text = item["text"] as? [String: Any]
+            let link = text?["link"] as? [String: Any]
+            guard let url = link?["url"] as? String ?? item["href"] as? String,
+                  let components = URLComponents(string: url),
+                  components.scheme == "https", components.host == "www.notion.so" else { return false }
+            return components.queryItems?.contains { $0.name == "pencilnotes" && $0.value == marker } == true
+        }
+    }
+
+    private static func media(uploadID: String, caption: String, captionLink: URL?, includeType: Bool) throws -> [String: Any] {
         guard caption.utf16.count <= 2000 else { throw NotionError.invalidInput("The note title is too long to use as a Notion caption. Rename the note and retry.") }
-        var value: [String: Any] = ["file_upload": ["id": uploadID], "caption": [["type": "text", "text": ["content": caption]]]]
+        var text: [String: Any] = ["content": caption]
+        if let captionLink { text["link"] = ["url": captionLink.absoluteString] }
+        var value: [String: Any] = ["file_upload": ["id": uploadID], "caption": [["type": "text", "text": text]]]
         if includeType { value["type"] = "file_upload" }
         return value
     }

@@ -25,7 +25,11 @@ final class SyncCoordinatorTests: XCTestCase {
         XCTAssertEqual(service.uploads.first?.filename, "PencilNotes-\(note.id.uuidString).pdf")
         XCTAssertEqual(service.appends.count, 1)
         XCTAssertEqual(service.appends.first?.uploadID, "upload-id")
-        XCTAssertEqual(service.appends.first?.caption, "Physics · \(expectedMarker)")
+        XCTAssertEqual(service.appends.first?.caption, "Physics")
+        let captionLink = try XCTUnwrap(service.appends.first?.captionLink)
+        let link = try XCTUnwrap(URLComponents(url: captionLink, resolvingAgainstBaseURL: false))
+        XCTAssertEqual(link.path, "/destination-page")
+        XCTAssertEqual(link.queryItems?.first(where: { $0.name == "pencilnotes" })?.value, expectedMarker)
         XCTAssertEqual(service.pendingMarkerObservedAtAppend, expectedMarker,
                        "A crash after sending the append must leave durable reconciliation information.")
         XCTAssertEqual(service.calls, ["find", "upload", "save", "append", "save"])
@@ -35,6 +39,7 @@ final class SyncCoordinatorTests: XCTestCase {
         XCTAssertEqual(synced.sync?.blockID, "created-block")
         XCTAssertEqual(synced.sync?.revision, note.revision)
         XCTAssertEqual(synced.sync?.format, .pdf)
+        XCTAssertEqual(synced.sync?.captionVersion, SyncCoordinator.captionVersion)
         XCTAssertNil(synced.sync?.pendingMarker)
         XCTAssertEqual(service.savedNotes.last, synced)
     }
@@ -43,7 +48,7 @@ final class SyncCoordinatorTests: XCTestCase {
     func testUnchangedRevisionDoesNotSendRequestsOrSaveAgain() async throws {
         var note = makeNote()
         note.sync = SyncState(destinationID: "destination-page", blockID: "known-block",
-                              revision: note.revision, format: .pdf)
+                              revision: note.revision, format: .pdf, captionVersion: SyncCoordinator.captionVersion)
         let service = MockSyncService()
         var progressMessages: [String] = []
 
@@ -55,6 +60,32 @@ final class SyncCoordinatorTests: XCTestCase {
         XCTAssertEqual(result, note)
         XCTAssertTrue(service.calls.isEmpty)
         XCTAssertTrue(progressMessages.contains { $0.contains("Already synced") })
+    }
+
+    @MainActor
+    func testLegacyCaptionIsReplacedEvenWhenNoteHasNotChanged() async throws {
+        var note = makeNote()
+        note.sync = SyncState(destinationID: "destination-page", blockID: "known-block",
+                              revision: note.revision, format: .png)
+        let service = MockSyncService()
+
+        let result = try await SyncCoordinator.sync(
+            note: note, data: Data([1]), format: .png, maxBytes: 4096,
+            client: service, save: service.save, progress: { _ in }
+        )
+
+        XCTAssertTrue(service.searches.isEmpty)
+        XCTAssertTrue(service.appends.isEmpty)
+        XCTAssertEqual(service.updates.first?.blockID, "known-block")
+        XCTAssertEqual(service.updates.first?.caption, note.title)
+        XCTAssertNotNil(service.updates.first?.captionLink)
+        XCTAssertEqual(result.sync?.captionVersion, SyncCoordinator.captionVersion)
+        let calls = service.calls
+        _ = try await SyncCoordinator.sync(
+            note: result, data: Data([1]), format: .png, maxBytes: 4096,
+            client: service, save: service.save, progress: { _ in }
+        )
+        XCTAssertEqual(service.calls, calls)
     }
 
     @MainActor
@@ -74,6 +105,8 @@ final class SyncCoordinatorTests: XCTestCase {
         XCTAssertEqual(service.updates.count, 1)
         XCTAssertEqual(service.updates.first?.blockID, "known-block")
         XCTAssertEqual(service.updates.first?.uploadID, "upload-id")
+        XCTAssertEqual(service.updates.first?.caption, note.title)
+        XCTAssertNotNil(service.updates.first?.captionLink)
         XCTAssertEqual(result.sync?.blockID, "known-block")
         XCTAssertEqual(result.sync?.revision, note.revision)
         XCTAssertEqual(service.calls, ["upload", "update", "save"])
@@ -322,12 +355,14 @@ private final class MockSyncService: NotionSyncService {
         let uploadID: String
         let format: ExportFormat
         let caption: String
+        let captionLink: URL?
     }
     struct UpdateCall {
         let blockID: String
         let uploadID: String
         let format: ExportFormat
         let caption: String
+        let captionLink: URL?
     }
     enum StorageFailure: Error { case diskFull }
 
@@ -361,16 +396,16 @@ private final class MockSyncService: NotionSyncService {
         return "upload-id"
     }
 
-    func appendFile(pageID: String, uploadID: String, format: ExportFormat, caption: String) async throws -> String {
+    func appendFile(pageID: String, uploadID: String, format: ExportFormat, caption: String, captionLink: URL?) async throws -> String {
         calls.append("append")
-        appends.append(AppendCall(pageID: pageID, uploadID: uploadID, format: format, caption: caption))
+        appends.append(AppendCall(pageID: pageID, uploadID: uploadID, format: format, caption: caption, captionLink: captionLink))
         pendingMarkerObservedAtAppend = savedNotes.last?.sync?.pendingMarker
         if let appendError { throw appendError }
         return "created-block"
     }
 
-    func updateFile(blockID: String, uploadID: String, format: ExportFormat, caption: String) async throws {
+    func updateFile(blockID: String, uploadID: String, format: ExportFormat, caption: String, captionLink: URL?) async throws {
         calls.append("update")
-        updates.append(UpdateCall(blockID: blockID, uploadID: uploadID, format: format, caption: caption))
+        updates.append(UpdateCall(blockID: blockID, uploadID: uploadID, format: format, caption: caption, captionLink: captionLink))
     }
 }
