@@ -27,10 +27,10 @@ summary=json.loads(Path('dist/UI-Previews/test-summary.json').read_text())
 print(summary)
 assert summary.get('passedTests', 0) >= 6, 'The six native checks must actually execute and pass'
 assert summary.get('failedTests', 0) == 0, 'Native test failures remain'
+print('::notice::Native simulator checks passed: '+str(summary['passedTests']))
 PY
   xcrun xcresulttool export attachments --path .build/ios-tests/Results.xcresult --output-path dist/UI-Previews/attachments || true
-  pencil_container="$(xcrun simctl get_app_container "$pencil_simulator" app.pencilnotes.personal data)"
-  cp "$pencil_container/tmp/editor-light.png" dist/UI-Previews/editor-light.png
-  cp "$pencil_container/tmp/editor-dark.png" dist/UI-Previews/editor-dark.png
+  # XCTest may use a cloned simulator. Read screenshots from the result bundle
+  # rather than assuming the app was installed on the original device ID.
 fi
 exit "$pencil_status"
