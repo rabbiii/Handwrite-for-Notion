@@ -35,7 +35,7 @@ struct NotebookView: View {
                 }
                 Button { model.newNote() } label: {
                     Label("New Note", systemImage: "plus").frame(maxWidth: .infinity).padding(.vertical, 6)
-                }.buttonStyle(.borderedProminent).tint(.primary).padding()
+                }.buttonStyle(.borderedProminent).tint(.primary).foregroundStyle(NotebookTheme.surface).padding()
             }
             .navigationTitle("PencilNotes")
             .toolbar {
@@ -57,7 +57,7 @@ struct NotebookView: View {
                 } description: {
                     Text("Handwrite notes, keep your original strokes, and send a copy to Notion when you’re ready.")
                 } actions: {
-                    Button("Create your first note") { model.newNote() }.buttonStyle(.borderedProminent)
+                    Button("Create your first note") { model.newNote() }.buttonStyle(.borderedProminent).foregroundStyle(NotebookTheme.surface)
                 }
             }
         }
@@ -73,7 +73,7 @@ struct NotebookView: View {
                     ForEach(Array(model.storageIssues.enumerated()), id: \.offset) { _, issue in
                         Text(issue).font(.caption).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 4)
                     }
-                }.padding().background(.yellow.opacity(0.14))
+                }.padding().background(.regularMaterial)
             }
         }
         .overlay {

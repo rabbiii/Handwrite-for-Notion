@@ -37,40 +37,30 @@ Both the integration's capabilities and page-level access matter. A page visible
 
 On subsequent launches, **Saved connection · verify online in Settings** means a credential was recovered from Keychain; it is not a fresh network test. Use **Verify Connection** to check it. **Disconnect** removes the app's stored token. To rotate/revoke a token, do so in Notion as well; disconnecting this app alone does not revoke the server-side credential.
 
-## 4. Upload a disposable note
+## 4. Sync a disposable note
 
-1. Write a short note and tap **Save**. Confirm **Saved on this iPad**.
-2. Leave **PDF** selected to upload all pages in one ordered document. **PNG** sync supports a single-page note only; for multiple pages choose PDF. Local **Export → PNG · all pages** remains available and creates a separate image for each page.
-3. Check the destination name, then tap **Sync to Notion** once. The app disables overlapping actions and displays progress.
-4. Wait for the success message, then open the destination in Notion. Open its PDF/image attachment and inspect the handwriting.
-5. Add another stroke and sync again using the same format and destination. The app should replace its existing block. Syncing again without local changes should report that it is already synced.
+1. Write a short note and tap Save. Confirm the local save status.
+2. In the floating top toolbar, choose the Notion destination and tap **Sync to Notion**. Swipe horizontally through the toolbar if a control is outside the visible area.
+3. Open the destination in Notion and inspect its single image. Its height follows the lowest stroke, and its background is `#191919` to blend with Notion dark mode. Ink colors are preserved rather than inverted; choose suitable ink colors for the image background.
+4. Add another stroke and sync again. The app updates its existing image block instead of appending another image.
+5. Turn on **Auto sync** beside Sync. A request starts half a second after canvas activity finishes; network transfer can take longer. Drawing remains available while uploading. Further edits are combined into a later update of the same block.
 
-The app pins **`Notion-Version: 2026-03-11`**, which is supported by the retrieved official SDK. It reads the workspace's reported file-upload allowance and caps this implementation at **20 MiB per file** because it uses single-part upload. If the workspace allowance is missing, it falls back to **5 MiB**. This conservative fallback is not a claim that every free account has a permanently fixed entitlement. PNG sync tries smaller render scales while retaining a 768 × 1024 minimum; an over-limit export produces an error instead of dropping pages. Split a large notebook into smaller notes or export it locally if necessary.
+There is no format picker or PDF export. Existing older attachments in Notion are not automatically deleted. Notes upgraded from older paged notebooks keep all editable strokes, joined in order into one continuous canvas.
 
-## What repeated sync changes
+## Upload limits and recovery
 
-- The app tracks the note, destination, format, and returned Notion block ID. It also places a stable PencilNotes identifier in the block caption to help find a prior upload. Keep that identifier intact for reliable recovery.
-- Editing and syncing the same note to the same destination in the same format updates that format's block.
-- Changing from PDF to PNG, or changing the destination, preserves the older block. It searches the selected page for the matching note-and-format marker before creating a block. Switching back can therefore find and update the older matching block.
-- Removing the local note does not delete the Notion copy. Restoring an editable backup creates a separate local note with a new identity and cleared sync linkage.
-- Sync does not continuously mirror remote edits. If you move or delete a Notion block, PencilNotes will not silently infer where you intended it to go.
+The client uses the supported `Notion-Version: 2026-03-11` contract and checks the workspace's reported file allowance. Single-part uploads are capped at 20 MiB, with a conservative 5 MiB fallback if Notion omits the allowance. Long canvases are downsampled within raster-memory and image-dimension bounds. If a safe image cannot fit the allowance, the app gives a descriptive error and keeps the editable source.
 
-## Retry and repair
+Auto Sync pauses after a network, credential, or permission failure. Restore access and tap Sync, or switch Auto Sync off and on. It operates while the app is active; background execution is not guaranteed by iPadOS.
 
-**No internet:** Local notes, saving, and export work offline. Restore connectivity and retry sync. Inspect Notion if the connection failed near the end of an upload; a lost response can leave a successful remote write.
+A lost append response can be ambiguous. The app records a stable caption marker before appending and searches for it on retry. Keep that marker in the Notion image caption. If a pending block cannot be found, wait and inspect the original destination before using **Note actions → Resolve uncertain sync**. Never reset an uncertain operation merely to dismiss its error.
 
-**Uncertain append:** If the app says a previous sync may have reached Notion, use the **original destination and format**, wait, and retry so it can search for the existing block. If it still cannot reconcile, open that original page in Notion and look for the attachment and its PencilNotes caption. Only after verifying that no corresponding block exists, use the note's **••• → Resolve uncertain sync → I checked: no block exists**, then retry. Do not clear this state simply to dismiss an error. Delayed visibility or an altered caption can otherwise lead to duplicates; exactly-once delivery is not guaranteed.
+If a previously linked block was deleted or moved, restore the intended destination/permissions and use **Reset Notion link**. A fresh search checks the selected page before creating a replacement. A block moved elsewhere is not deleted by the app.
 
-**Deleted or moved block:** If a linked block was deleted or moved and a subsequent update fails, first inspect Notion and confirm the intended destination. Use the note's **••• → Reset Notion link**, then sync. The next sync searches the selected page and updates a matching block or creates one if absent. A block moved elsewhere remains there. Do not use this action to work around missing page permission; restore access first.
+- **401:** reconnect using a valid internal integration token.
+- **403/404:** check integration capabilities and page connections; inaccessible pages can look missing.
+- **429:** wait the Retry-After interval displayed before manually retrying. Writes are not automatically replayed.
+- **No search results:** share the page with the integration, allow indexing time, and refresh title search.
+- **Offline:** local notes and editable backups keep working. Reconnect and retry sync deliberately.
 
-**Invalid token / 401:** Reopen Notion Settings, enter a valid internal integration token, and reconnect. Check that the integration has not been revoked.
-
-**Permission error / 403 or 404:** Recheck the workspace, page connection, and Read/Insert/Update capabilities. A 404 can mean a page/block is inaccessible, not only that it was deleted. Do not repeatedly reset the link without resolving permissions.
-
-**No search results:** Confirm the page is connected to this integration, wait for indexing, try its exact title, and use Refresh. Page search is title search over accessible results, not an enumeration of your whole workspace or handwriting search.
-
-**File limit / 400:** Read the displayed size/limit error. Use PDF for a multipage note; reduce the content per notebook if the resulting file is too large. Local exports and editable backups are separate from upload size limits.
-
-**Rate limit / 429:** Wait at least the retry interval displayed in the error before trying again. The app does not automatically replay failed writes. Avoid repeatedly reconnecting or tapping sync; retry persistent errors later.
-
-Continue with the [device acceptance checklist](ACCEPTANCE_TESTS.md) before using the app for important notes.
+Deleting a local note leaves its remote image intact. Restored backups receive a new local identity and cleared destination/sync links. Export editable backups regularly; Notion images do not contain the original PencilKit strokes.
