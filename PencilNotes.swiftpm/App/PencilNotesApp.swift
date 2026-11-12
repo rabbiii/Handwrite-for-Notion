@@ -11,7 +11,7 @@ struct PencilNotesApp: App {
                 .environmentObject(model)
                 .tint(NotebookTheme.ink)
                 .onChange(of: scenePhase) { _, phase in
-                    if phase != .active { model.saveNow() }
+                    model.setSceneActive(phase == .active)
                 }
         }
     }

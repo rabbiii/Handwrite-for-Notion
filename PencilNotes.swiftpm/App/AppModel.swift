@@ -34,6 +34,7 @@ final class AppModel: ObservableObject {
     private let syncDebouncer = AutoSyncDebouncer()
     private var pendingAutoSync = Set<UUID>()
     private var canvasInteracting = false
+    private var sceneActive = true
     private var lastCanvasActivity = Date.distantPast
     private(set) var maxUploadBytes = 5 * 1024 * 1024
     private var repository: NoteRepository?
@@ -230,6 +231,12 @@ final class AppModel: ObservableObject {
         } catch { report(error) }
     }
 
+    func setSceneActive(_ active: Bool) {
+        sceneActive = active
+        if !active { syncDebouncer.cancel(); _ = saveNow() }
+        else { schedulePendingSync() }
+    }
+
     func canvasInteraction(_ active: Bool) {
         canvasInteracting = active
         lastCanvasActivity = Date()
@@ -307,7 +314,7 @@ final class AppModel: ObservableObject {
     }
 
     private func schedulePendingSync() {
-        guard autoSyncEnabled, !autoSyncPaused, !canvasInteracting, !isSyncing, client != nil else { return }
+        guard sceneActive, autoSyncEnabled, !autoSyncPaused, !canvasInteracting, !isSyncing, client != nil else { return }
         pendingAutoSync = pendingAutoSync.filter { id in
             guard let note = notes.first(where: { $0.id == id }), note.destination != nil else { return false }
             return note.sync?.revision != note.revision || note.sync?.format != .png || note.sync?.destinationID != note.destination?.id
@@ -315,7 +322,7 @@ final class AppModel: ObservableObject {
         guard !pendingAutoSync.isEmpty else { return }
         let delay = max(0, 0.5 - Date().timeIntervalSince(lastCanvasActivity))
         syncDebouncer.schedule(delay: delay) { [weak self] in
-            guard let self, self.autoSyncEnabled, !self.autoSyncPaused, !self.canvasInteracting else { return }
+            guard let self, self.sceneActive, self.autoSyncEnabled, !self.autoSyncPaused, !self.canvasInteracting else { return }
             let candidates = self.pendingAutoSync.sorted { $0.uuidString < $1.uuidString }
             guard let id = candidates.first else { return }
             // The debounce task must not own an in-flight request: new Pencil

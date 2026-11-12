@@ -2,7 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 python3 scripts/generate_xcode_project.py
-pencil_simulator="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); devices=[v for values in d["devices"].values() for v in values if "iPad" in v["name"]]; assert devices,"No iPad simulator is installed"; print(devices[0]["udid"])')"
+pencil_simulator="$(xcrun simctl list devices available -j | python3 -c 'import json,sys,re; d=json.load(sys.stdin); devices=[(tuple(map(int,re.findall(r"[0-9]+",runtime))),v) for runtime,values in d["devices"].items() if "iOS" in runtime for v in values if "iPad" in v["name"]]; assert devices,"No iPad simulator is installed"; print(max(devices,key=lambda item:item[0])[1]["udid"])')"
 mkdir -p .build/ios-tests dist/UI-Previews
 set +e
 xcodebuild test -project MacBuild/PencilNotes.xcodeproj -scheme PencilNotes \

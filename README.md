@@ -1,63 +1,37 @@
 # PencilNotes
 
-A personal iPad notebook built with SwiftUI and PencilKit. Write with Apple Pencil, reopen and edit the original strokes, export every page, and send a PDF or PNG to a page in your Notion workspace.
+A native iPad handwriting notebook with editable PencilKit ink, local storage, and one-way image sync to Notion.
 
-**Start on iPad:** [installation guide](docs/IPAD_SETUP.md) → [Notion connection guide](docs/NOTION_SETUP.md) → [device checklist](docs/ACCEPTANCE_TESTS.md).
+## Notebook
 
-The app package is **`PencilNotes.swiftpm`**. The `Package.swift` at the repository root is a separate portable test package; do not open that file as the iPad app.
+The drawing surface uses Apple's public PencilKit canvas and native tool picker. It has a fixed logical width and grows vertically as you write or scroll. Pen, pencil, marker, eraser, selection/lasso, ruler, and Pencil input are supplied by PencilKit. Apple's Notes app itself is not an embeddable framework.
 
-**Windows alternative:** [build on a GitHub cloud Mac, then install using Windows/AltServer](docs/WINDOWS_INSTALL.md). The `MacBuild` Xcode project and manual GitHub Actions workflow prepare an unsigned IPA for personal sideloading, without Swift Playground. The first cloud build has passed; its unsigned IPA is available in the build run linked below. Start by checking AltStore can run on your iPadOS version.
+The surface follows the system's light/dark appearance. Floating, horizontally scrollable controls sit over the drawing: Undo, Redo, Finger drawing, Clear Canvas, Save, Export, Notion destination, Sync, Auto Sync, Settings, and note actions. There is no app-owned bottom utility bar or page navigator. The native PencilKit tool palette retains its system docking behavior. Liquid Glass is used on iPadOS 26 and later, with a material fallback for earlier systems.
 
-## Implemented
+## Images and Notion
 
-- Native PencilKit pen, pencil, highlighter, eraser, color controls, undo/redo, pinch zoom, and finger navigation. Finger drawing is an explicit option.
-- Multiple fixed pages per note; create, rename, save, reopen, and delete notes/pages. Original `PKDrawing` bytes are saved after a short pause and on scene changes, navigation, export, and sync.
-- Atomic note writes, previous-version recovery, corrupt-file preservation, explicit save errors, and editable backup export/import. Restored backups get independent identities.
-- White-background PNG for every page and ordered multipage PDF. Exports scale to include strokes moved outside the paper with the lasso. PNG sync supports one-page notes; use PDF to sync all pages of a longer note.
-- Personal Notion internal integration credentials stored in Keychain. Accessible-page search is paginated and destinations are remembered per note.
-- Official Notion file uploads and image/PDF blocks. Changed notes update their saved block. Stable caption markers and durable pending operations protect retries after an uncertain response. Changing format creates or reuses a separate block; earlier-format copies remain in Notion.
+Each sync sends one PNG image whose height follows the lowest stroke. The background is `#191919`, chosen to blend with Notion's default dark page background. Original stroke colors are rendered unchanged, so black ink remains black. Notion themes can change independently of this app.
 
-No external library, OCR service, application backend, recurring subscription, or App Store distribution is required by this design. A native IPA is now built on GitHub for personal signing with tools such as SideStore. Swift Playground remains an alternative source-project route.
+The image normally keeps the canvas's fixed width. Off-canvas ink moved with the lasso is included and fitted horizontally. Extremely long drawings are downsampled to bound rendering memory; a clear error is shown if safe rendering or Notion's file-size limit cannot be met. No strokes are silently dropped. There is no PDF choice.
 
-## Validation status
+The app updates its existing image block after edits. Notion receives a rendered image; original editable strokes stay in the app. A personal Notion integration token is stored in Keychain. Follow [Notion setup](docs/NOTION_SETUP.md) for permissions and page access.
 
-The portable core has been compiled and tested on Linux with Swift 6.2.3. Storage, API contracts with mocked URLSession responses, and sync orchestration are covered by XCTest. See [validation details](docs/VALIDATION.md).
+## Autosync and local safety
 
-**The native iPad device build passed on GitHub’s macOS runner.** [Build run and IPA artifact](https://github.com/rabbiii/Handwrite-for-Notion/actions/runs/43120058457) (source commit `1b31caf`). Download `PencilNotes-unsigned-iPad`, extract `PencilNotes-unsigned.ipa`, and sign/install it with SideStore or another personal signing tool. GitHub sign-in is required for artifact downloads. The artifact is retained for three days; the workflow can build it again.
+Auto Sync is optional and initially off. When enabled, it waits 0.5 seconds after drawing/erasing/undo/scroll interaction finishes. If a previous upload is still running, edits are coalesced into the next upload. Drawing stays available during sync; network completion merges only remote metadata, preserving newer local ink. The delay begins a request rather than guaranteeing that a network upload completes within 0.5 seconds.
 
-Physical iPad installation, Pencil interactions, exports, Keychain runtime behavior, and live Notion uploads still need device validation. Successful compilation does not establish those behaviors.
+Autosync requires a saved connection, a destination, internet, and an active app. A network or permission error pauses automatic attempts; tap Sync to retry or turn Auto Sync off and on. The app never blindly retries an uncertain block append. The note menu offers reconciliation/reset actions with explicit inspection instructions.
 
-## Repository layout
+Local strokes are saved after a short pause and on navigation/backgrounding. Notes use atomic writes and retain a previous readable version. Export an Editable Backup regularly to Files/iCloud Drive, particularly before updating or changing app identity. Restoring a backup creates a separate note. Existing paged notes are migrated into one continuous drawing with editable strokes in their original order.
 
-```text
-PencilNotes.swiftpm/
-  Package.swift                 iPad App Playground manifest
-  App/                          SwiftUI UI, PencilKit, exporters, Keychain
-  Core/                         Models, atomic persistence, Notion client, sync
-Package.swift                   Portable core test target
-Tests/PencilNotesCoreTests/      Storage, protocol, and retry tests
-docs/                           Setup, architecture, research, acceptance
-scripts/test.sh                 Repeatable portable tests + Swift syntax checks
-scripts/package.py              Build a clean ZIP and single-file fallback
-```
+## Source and development
 
-## Development
+- `PencilNotes.swiftpm/App/`: SwiftUI, native canvas, image renderer, and Keychain.
+- `PencilNotes.swiftpm/Core/`: models, persistence, geometry, debounce, and Notion requests/sync.
+- `PencilNotes.swiftpm/Resources/`: app icon and monochrome accent assets.
+- `MacBuild/PencilNotes.xcodeproj`: standalone iPad app target.
+- `Tests/`: portable tests plus iPad simulator drawing/export checks.
 
-With Swift 5.9 or later installed:
+With Swift installed, run `bash scripts/test.sh`. Native builds and simulator checks require Xcode 26 or newer. `python3 scripts/generate_xcode_project.py` regenerates source/resource references when files change. Keep the application bundle identifier stable for personal updates.
 
-```sh
-bash scripts/test.sh
-python3 scripts/package.py
-```
-
-The test script accepts `SWIFT_BIN=/path/to/swift` and uses writable caches inside `.build`. On this prepared cloud machine it also locates the installed Swift 6.2.3 toolchain automatically. It does not fetch dependencies or modify source files.
-
-Packaging produces `dist/PencilNotes-iPad.zip`, containing the app package, documentation, and a combined source fallback for pasting into a new App template if importing the package is unavailable. Keep exactly one `@main` entry point. See the iPad guide before copying files.
-
-## Data and sync behavior
-
-Local `.pencilnote` files contain a versioned JSON envelope with note metadata, page identifiers, original PencilKit bytes, and remote block identifiers. Tokens are absent from these files and from backups. Export a backup to Files/iCloud Drive before deleting or renaming the app project or changing its bundle identity.
-
-Sync is explicit and one-way: the app sends an exported document to `api.notion.com`. Notion cannot edit the original PencilKit strokes. There is no automatic upload, handwriting recognition, analytics, or third-party document hosting. Local notes keep working offline. Notion's limits and page permissions still apply.
-
-The app does not automatically delete remote blocks when a local note is deleted. Its caption contains a stable `PencilNotes:…` identifier; leave that identifier intact so interrupted syncs can find the block. Moving/deleting a remote block can require **Note menu → Reset Notion link**. Uncertain appends require reconciliation or explicit inspection before clearing the pending operation.
+The portable tests exercise storage, geometry, timing, and mocked Notion behavior. Simulator tests exercise PencilKit migration, clear/undo, PNG colors/dimensions, storage reopening, and light/dark editor rendering. Physical Pencil behavior, SideStore installation, live Notion permissions/uploads, and perceptual glass appearance on an actual iPad require device checks.

@@ -67,6 +67,7 @@ final class InkController: UIViewController, PKCanvasViewDelegate {
         view.backgroundColor = background
         canvas.backgroundColor = background
         canvas.isOpaque = true
+        canvas.tintColor = .label
         canvas.frame = view.bounds
         canvas.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         canvas.alwaysBounceVertical = true

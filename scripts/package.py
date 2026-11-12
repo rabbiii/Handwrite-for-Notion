@@ -13,7 +13,7 @@ sources = sorted((app / "Core").glob("*.swift")) + sorted((app / "App").glob("*.
 combined = output / "PencilNotes-All.swift"
 header = "// Single-file fallback for a NEW Swift Playground App template.\n// Replace the template's @main file and remove its ContentView; do not also add split sources.\n// Do not paste either Package.swift manifest here.\n\n"
 combined.write_text(header + "\n\n".join("// MARK: - " + str(p.relative_to(app)) + "\n" + p.read_text() for p in sources))
-files = [app / "Package.swift", *sources, root / "README.md", *sorted((root / "docs").glob("*.md"))]
+files = [app / "Package.swift", *sources, *sorted(p for p in (app / "Resources").rglob("*") if p.is_file()), root / "README.md", root / "CHANGELOG.md", *sorted((root / "docs").glob("*.md"))]
 
 
 def add_entry(bundle, name, data=b"", *, directory=False):
@@ -55,9 +55,9 @@ build_files = [root / path for path in [
     "Package.swift", ".gitignore", ".github/workflows/build-ios.yml", "MacBuild/Info.plist",
     "MacBuild/PencilNotes.xcodeproj/project.pbxproj",
     "MacBuild/PencilNotes.xcodeproj/xcshareddata/xcschemes/PencilNotes.xcscheme",
-    "scripts/generate_xcode_project.py", "scripts/build_ios_unsigned.sh", "scripts/test.sh", "scripts/package.py",
+    "scripts/generate_xcode_project.py", "scripts/build_ios_unsigned.sh", "scripts/test_ios.sh", "scripts/select_xcode.sh", "scripts/test.sh", "scripts/package.py",
 ]]
-build_files += sorted((root / "Tests/PencilNotesCoreTests").glob("*.swift"))
+build_files += sorted((root / "Tests").rglob("*.swift"))
 checksums += write_archive(output / "PencilNotes-Windows-build-kit.zip",
                           [*entries, *((str(path.relative_to(root)), path) for path in build_files)])
 (output / "SHA256SUMS").write_text(checksums)

@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(CoreGraphics)
+import CoreGraphics
+#endif
 
 /// Logical drawing coordinates stay stable across iPad sizes and rotations.
 enum CanvasGeometry {
