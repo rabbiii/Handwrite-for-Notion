@@ -22,17 +22,19 @@ final class CanvasActions: ObservableObject {
 struct InkCanvas: UIViewControllerRepresentable {
     let drawingData: Data
     let fingerDrawing: Bool
+    var dottedPaper = false
     let actions: CanvasActions
     let changed: (Data) -> Void
     let interaction: (Bool) -> Void
 
     func makeUIViewController(context: Context) -> InkController {
-        InkController(data: drawingData, fingerDrawing: fingerDrawing, actions: actions, changed: changed, interaction: interaction)
+        InkController(data: drawingData, fingerDrawing: fingerDrawing, dottedPaper: dottedPaper, actions: actions, changed: changed, interaction: interaction)
     }
     func updateUIViewController(_ controller: InkController, context: Context) {
         controller.changed = changed
         controller.interaction = interaction
         controller.setFingerDrawing(fingerDrawing)
+        controller.setDottedPaper(dottedPaper)
     }
 }
 
@@ -40,6 +42,7 @@ struct InkCanvas: UIViewControllerRepresentable {
 /// Pencil interaction, scrolling, and the system tool picker.
 final class InkController: UIViewController, PKCanvasViewDelegate {
     let canvas = PKCanvasView()
+    let paperGrid = PaperGridView()
     private let picker = PKToolPicker()
     private let initialData: Data
     private let actions: CanvasActions
@@ -48,12 +51,14 @@ final class InkController: UIViewController, PKCanvasViewDelegate {
     private var logicalHeight: CGFloat = 2048
     private var lastWidth: CGFloat = 0
     private var fingerDrawing: Bool
+    private var dottedPaper: Bool
     var changed: (Data) -> Void
     var interaction: (Bool) -> Void
 
-    init(data: Data, fingerDrawing: Bool, actions: CanvasActions, changed: @escaping (Data) -> Void, interaction: @escaping (Bool) -> Void) {
+    init(data: Data, fingerDrawing: Bool, dottedPaper: Bool = false, actions: CanvasActions, changed: @escaping (Data) -> Void, interaction: @escaping (Bool) -> Void) {
         initialData = data
         self.fingerDrawing = fingerDrawing
+        self.dottedPaper = dottedPaper
         self.actions = actions
         self.changed = changed
         self.interaction = interaction
@@ -63,10 +68,12 @@ final class InkController: UIViewController, PKCanvasViewDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        let background = UIColor { trait in trait.userInterfaceStyle == .dark ? UIColor(red: 25.0 / 255, green: 25.0 / 255, blue: 25.0 / 255, alpha: 1) : .white }
-        view.backgroundColor = background
-        canvas.backgroundColor = background
-        canvas.isOpaque = true
+        view.backgroundColor = NotebookTheme.canvasBackground
+        paperGrid.frame = view.bounds
+        paperGrid.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.addSubview(paperGrid)
+        canvas.backgroundColor = .clear
+        canvas.isOpaque = false
         canvas.tintColor = .label
         canvas.frame = view.bounds
         canvas.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -81,6 +88,7 @@ final class InkController: UIViewController, PKCanvasViewDelegate {
         canvas.drawing = (try? NoteExporter.drawing(initialData)) ?? PKDrawing()
         canvas.delegate = self
         view.addSubview(canvas)
+        setDottedPaper(dottedPaper)
         setFingerDrawing(fingerDrawing)
         actions.canvas = canvas
         actions.replaced = { [weak self] ink in
@@ -131,6 +139,17 @@ final class InkController: UIViewController, PKCanvasViewDelegate {
         canvas.drawingPolicy = enabled ? .anyInput : .pencilOnly
         canvas.panGestureRecognizer.minimumNumberOfTouches = enabled ? 2 : 1
     }
+    func setDottedPaper(_ enabled: Bool) {
+        dottedPaper = enabled
+        paperGrid.isHidden = !enabled
+        updateGrid()
+    }
+
+    private func updateGrid() {
+        paperGrid.contentOffset = canvas.contentOffset
+        paperGrid.zoomScale = canvas.zoomScale
+        if dottedPaper { paperGrid.setNeedsDisplay() }
+    }
     func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
         guard configured else { return }
         changed(canvasView.drawing.dataRepresentation())
@@ -143,7 +162,7 @@ final class InkController: UIViewController, PKCanvasViewDelegate {
         if !decelerate { interaction(false) }
     }
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { interaction(false) }
-    func scrollViewDidScroll(_ scrollView: UIScrollView) { extendIfNeeded() }
+    func scrollViewDidScroll(_ scrollView: UIScrollView) { extendIfNeeded(); updateGrid() }
 
     private func extendIfNeeded() {
         guard configured, !updatingExtent, canvas.bounds.width > 0 else { return }
@@ -156,6 +175,45 @@ final class InkController: UIViewController, PKCanvasViewDelegate {
         let desired = CGSize(width: canvas.bounds.width, height: ceil(logicalHeight * scale))
         if abs(canvas.contentSize.height - desired.height) > 1 || abs(canvas.contentSize.width - desired.width) > 1 {
             canvas.contentSize = desired
+        }
+        updateGrid()
+    }
+}
+
+/// Draw only the visible guides underneath transparent PencilKit ink. The grid
+/// follows logical paper coordinates while scrolling and resizing, without
+/// allocating a bitmap for the entire continuous canvas or modifying strokes.
+final class PaperGridView: UIView {
+    var contentOffset: CGPoint = .zero
+    var zoomScale: CGFloat = 1
+    static let spacing: CGFloat = 24
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        isOpaque = false
+        backgroundColor = .clear
+        isUserInteractionEnabled = false
+        isAccessibilityElement = false
+        contentMode = .redraw
+    }
+    required init?(coder: NSCoder) { fatalError("Use init(frame:)") }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        setNeedsDisplay()
+    }
+
+    override func draw(_ rect: CGRect) {
+        guard let context = UIGraphicsGetCurrentContext(), zoomScale > 0 else { return }
+        let spacing = Self.spacing * zoomScale
+        let radius = max(0.7, zoomScale * 0.8)
+        let firstX = ceil(max(0, contentOffset.x) / spacing) * spacing - contentOffset.x
+        let firstY = ceil(max(0, contentOffset.y) / spacing) * spacing - contentOffset.y
+        context.setFillColor(UIColor.label.withAlphaComponent(0.22).cgColor)
+        for y in stride(from: firstY, through: bounds.height, by: spacing) {
+            for x in stride(from: firstX, through: bounds.width, by: spacing) {
+                context.fillEllipse(in: CGRect(x: x - radius, y: y - radius, width: radius * 2, height: radius * 2))
+            }
         }
     }
 }

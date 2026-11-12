@@ -2,6 +2,9 @@ import SwiftUI
 import UIKit
 
 enum NotebookTheme {
+    static let canvasBackground = UIColor { trait in
+        trait.userInterfaceStyle == .dark ? UIColor(red: 12.0 / 255, green: 12.0 / 255, blue: 16.0 / 255, alpha: 1) : .white
+    }
     static let ink = Color.primary
     static let surface = Color(uiColor: UIColor { trait in
         trait.userInterfaceStyle == .dark ? UIColor(red: 25.0 / 255, green: 25.0 / 255, blue: 25.0 / 255, alpha: 1) : UIColor(white: 1, alpha: 1)

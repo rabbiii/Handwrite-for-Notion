@@ -28,7 +28,7 @@ struct NotebookView: View {
         NavigationSplitView(columnVisibility: $columnVisibility, preferredCompactColumn: $preferredColumn) {
             VStack(spacing: 0) {
                 if model.notes.isEmpty {
-                    ContentUnavailableView("Your next idea starts here", systemImage: "pencil.and.scribble",
+                    ContentUnavailableView("✨ Your next idea starts here", systemImage: "pencil.and.scribble",
                         description: Text("Create a note, pick up your Pencil, and make room to think."))
                 } else {
                     noteList
@@ -37,7 +37,7 @@ struct NotebookView: View {
                     selectionActions
                 } else {
                     Button { withAnimation(noteAnimation) { model.newNote() } } label: {
-                        Label("New Note", systemImage: "plus").frame(maxWidth: .infinity).padding(.vertical, 6)
+                        Label("✍️ New Note", systemImage: "plus").frame(maxWidth: .infinity).padding(.vertical, 6)
                     }.buttonStyle(.borderedProminent).tint(.primary).foregroundStyle(NotebookTheme.surface).padding()
                 }
             }
@@ -51,12 +51,13 @@ struct NotebookView: View {
                             Text("Title").tag("Title")
                             Text("Date created").tag("Created")
                         }
-                        Button("Recently Deleted", systemImage: "trash") { showingTrash = true }
+                        Button("🗑️ Recently Deleted", systemImage: "trash") { showingTrash = true }
                     }
                 }
-                ToolbarItem(placement: .topBarLeading) {
-                    Button { showingSettings = true } label: { Image(systemName: "gearshape") }
-                        .accessibilityLabel("Notion settings")
+                ToolbarItemGroup(placement: .topBarLeading) {
+                    Button { showingSettings = true } label: { Text("⚙️") }
+                        .accessibilityLabel("Settings")
+                    SupportShortcut()
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button { importingBackup = true } label: { Image(systemName: "square.and.arrow.down") }
@@ -150,15 +151,16 @@ struct NotebookView: View {
 
     private var welcomeView: some View {
         ContentUnavailableView {
-            Label("What's on your mind?", systemImage: "pencil.tip.crop.circle")
+            Text("💡 What's on your mind?")
+                .font(.title.weight(.bold))
         } description: {
             Text(model.notes.isEmpty
-                 ? "Create your first note and make room to think."
-                 : "Choose a note from the sidebar or start something new.")
+                 ? "🌱 Create your first note and make room to think."
+                 : "📚 Choose a note from the sidebar or start something new.")
         } actions: {
             VStack(spacing: 16) {
                 Button { withAnimation(noteAnimation) { model.newNote() } } label: {
-                    Label("New Note", systemImage: "plus")
+                    Label("✍️ New Note", systemImage: "plus")
                 }
                 .buttonStyle(.borderedProminent).tint(.primary).foregroundStyle(NotebookTheme.surface)
                 Text(model.notes.count == 1 ? "1 note on this iPad" : "\(model.notes.count) notes on this iPad")
@@ -354,7 +356,7 @@ struct ErrorBanner: View {
     let dismiss: () -> Void
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.primary)
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
             Text(message).font(.callout).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
             Button(action: dismiss) { Image(systemName: "xmark.circle.fill") }.accessibilityLabel("Dismiss message")
         }.padding().background(.regularMaterial)

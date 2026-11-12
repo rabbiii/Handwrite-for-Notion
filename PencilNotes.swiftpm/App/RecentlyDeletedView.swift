@@ -19,8 +19,8 @@ struct RecentlyDeletedView: View {
                         }.padding(.vertical, 6)
                     }
                 } footer: { Text("Notes remain here until you restore or permanently delete them. Notion images are unchanged.") }
-            }.overlay { if model.deletedNotes.isEmpty { ContentUnavailableView("No deleted notes", systemImage: "trash") } }
-                .navigationTitle("Recently Deleted")
+            }.overlay { if model.deletedNotes.isEmpty { ContentUnavailableView("🌿 No deleted notes", systemImage: "trash") } }
+                .navigationTitle("🗑️ Recently Deleted")
                 .toolbar { Button("Done") { dismiss() } }
                 .alert("Permanently delete this note?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } })) {
                     Button("Delete permanently", role: .destructive) { if let note = deleting { model.permanentlyDelete(note.id) }; deleting = nil }

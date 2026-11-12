@@ -323,6 +323,88 @@ final class DrawingTests: XCTestCase {
         }
         window.isHidden = true
     }
+
+    func testDottedPaperTogglePreservesInkAndFollowsScroll() throws {
+        let data = ink(y: 260).dataRepresentation()
+        var changes = 0
+        let controller = InkController(data: data, fingerDrawing: false, actions: CanvasActions(),
+                                       changed: { _ in changes += 1 }, interaction: { _ in })
+        controller.loadViewIfNeeded()
+        controller.view.frame = CGRect(x: 0, y: 0, width: 768, height: 1024)
+        controller.view.setNeedsLayout()
+        controller.view.layoutIfNeeded()
+        let original = controller.canvas.drawing.dataRepresentation()
+        let priorChanges = changes
+        XCTAssertTrue(controller.paperGrid.isHidden)
+        controller.setDottedPaper(true)
+        XCTAssertFalse(controller.paperGrid.isHidden)
+        XCTAssertFalse(controller.paperGrid.isUserInteractionEnabled, "Guides must not intercept Pencil or finger input.")
+        controller.canvas.contentOffset.y = 347
+        controller.scrollViewDidScroll(controller.canvas)
+        XCTAssertEqual(controller.paperGrid.contentOffset, controller.canvas.contentOffset)
+        XCTAssertEqual(controller.paperGrid.zoomScale, controller.canvas.zoomScale)
+        controller.setDottedPaper(false)
+        XCTAssertTrue(controller.paperGrid.isHidden)
+        XCTAssertEqual(controller.canvas.drawing.dataRepresentation(), original)
+        XCTAssertEqual(changes, priorChanges, "Paper preferences must not trigger saves or Notion uploads.")
+    }
+
+    func testHomeSettingsAndDottedPaperAppearances() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let model = AppModel(directory: directory, loadCredential: false)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 1366, height: 1024))
+        window.windowScene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+        defer { window.isHidden = true }
+        for (name, style) in [("light", UIUserInterfaceStyle.light), ("dark", .dark)] {
+            window.overrideUserInterfaceStyle = style
+            let screens: [(String, AnyView)] = [
+                ("Home", AnyView(NotebookView().environmentObject(model))),
+                ("Settings", AnyView(NotionSettingsView().environmentObject(model)))
+            ]
+            for (screen, view) in screens {
+                window.rootViewController = UIHostingController(rootView: view)
+                window.makeKeyAndVisible()
+                try await Task.sleep(nanoseconds: 500_000_000)
+                let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+                    window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+                }
+                let attachment = XCTAttachment(image: image)
+                attachment.name = "\(screen) \(name)"
+                attachment.lifetime = .keepAlways
+                add(attachment)
+                if screen == "Settings", let root = window.rootViewController?.view {
+                    func scrollViews(in view: UIView) -> [UIScrollView] {
+                        (view as? UIScrollView).map { [$0] } ?? view.subviews.flatMap { scrollViews(in: $0) }
+                    }
+                    if let form = scrollViews(in: root).first(where: { $0.contentSize.height > $0.bounds.height }) {
+                        form.setContentOffset(CGPoint(x: 0, y: max(0, form.contentSize.height - form.bounds.height + form.adjustedContentInset.bottom)), animated: false)
+                        try await Task.sleep(nanoseconds: 500_000_000)
+                        let about = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+                            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+                        }
+                        let aboutAttachment = XCTAttachment(image: about)
+                        aboutAttachment.name = "About and Support \(name)"
+                        aboutAttachment.lifetime = .keepAlways
+                        add(aboutAttachment)
+                    }
+                }
+            }
+            let controller = InkController(data: ink(y: 260).dataRepresentation(), fingerDrawing: false,
+                                           dottedPaper: true, actions: CanvasActions(), changed: { _ in }, interaction: { _ in })
+            window.rootViewController = controller
+            window.makeKeyAndVisible()
+            try await Task.sleep(nanoseconds: 500_000_000)
+            let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+                window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+            }
+            let attachment = XCTAttachment(image: image)
+            attachment.name = "Dotted canvas \(name)"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+            XCTAssertFalse(controller.paperGrid.isHidden)
+        }
+    }
 }
 
 private final class RequestCounts: @unchecked Sendable {

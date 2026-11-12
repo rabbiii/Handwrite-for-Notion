@@ -69,6 +69,10 @@ Use the same Apple Account in iloader and SideStore. Free accounts normally requ
 3. Use **Library** for sorting and Recently Deleted.
 4. Tap the selected row's **−** button to save and return Home.
 
+Use **Dotted paper** in the editor or **Settings → Canvas** for subtle writing guides. The preference applies to every note; the dots are not included in image exports or Notion sync. The canvas uses a deeper background in dark mode.
+
+Find **Support** beside Settings, or open **Settings → About & Support** for Patreon, GitHub and email feedback. Support is optional. The creator emoji cycles while the app is active and respects Reduce Motion.
+
 In **Edit** mode, tap rows to select notes. Use Select All, Unselect All, or Delete. Tap outside the sidebar to finish.
 
 ## 🔗 Send handwriting to Notion

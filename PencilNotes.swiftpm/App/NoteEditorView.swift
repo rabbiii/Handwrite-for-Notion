@@ -12,13 +12,14 @@ struct NoteEditorView: View {
     @State private var clearingCanvas = false
     @State private var resolvingSync = false
     @State private var resettingLink = false
+    @AppStorage("dottedPaperEnabled") private var dottedPaper = false
 
     private var note: Note? { model.notes.first { $0.id == noteID } }
     var body: some View {
         if let note, let page = note.pages.first {
             ZStack(alignment: .top) {
-                NotebookTheme.surface.ignoresSafeArea()
-                InkCanvas(drawingData: page.drawing, fingerDrawing: fingerDrawing, actions: canvasActions,
+                Color(uiColor: NotebookTheme.canvasBackground).ignoresSafeArea()
+                InkCanvas(drawingData: page.drawing, fingerDrawing: fingerDrawing, dottedPaper: dottedPaper, actions: canvasActions,
                           changed: { model.drawingChanged($0, pageID: page.id) },
                           interaction: { model.canvasInteraction($0) })
                     .id("\(note.id.uuidString):\(page.id.uuidString)")
@@ -36,10 +37,16 @@ struct NoteEditorView: View {
                                     .background(fingerDrawing ? Color.primary.opacity(0.1) : .clear, in: Capsule())
                             }.accessibilityLabel("Draw with finger").accessibilityValue(fingerDrawing ? "On" : "Off")
                             tool("Clear canvas", "eraser") { clearingCanvas = true }
-                            tool("Save", "checkmark.circle") { model.saveNow() }
+                            tool("💾 Save", "checkmark.circle") { model.saveNow() }
+                            Toggle(isOn: $dottedPaper) {
+                                Label("Dotted paper", systemImage: "circle.grid.3x3")
+                            }
+                            .toggleStyle(.button)
+                            .padding(.horizontal, 6)
+                            .accessibilityIdentifier("dottedPaperToggle")
                             Menu {
-                                Button("Share image", systemImage: "square.and.arrow.up") { model.export() }
-                                Button("Editable backup", systemImage: "externaldrive") { model.exportBackup() }
+                                Button("🖼️ Share image", systemImage: "square.and.arrow.up") { model.export() }
+                                Button("📦 Editable backup", systemImage: "externaldrive") { model.exportBackup() }
                             } label: { Label("Export", systemImage: "square.and.arrow.up").padding(.horizontal, 12).padding(.vertical, 10) }
                             separator
                             tool(note.destination?.title ?? "Choose Notion page", "doc.badge.arrow.up") { choosingPage = true }
