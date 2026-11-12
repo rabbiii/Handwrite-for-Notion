@@ -90,7 +90,7 @@ struct FeedbackButton: View {
                 Text("Send feedback")
                 Spacer()
                 Image(systemName: "arrow.up.right").foregroundStyle(.secondary)
-            }.padding(.vertical, 4).contentShape(Rectangle())
+            }.foregroundStyle(Color.primary).padding(.vertical, 4).contentShape(Rectangle())
         }
         .buttonStyle(.borderless)
         .accessibilityHint("Email \(CreatorLinks.email)")

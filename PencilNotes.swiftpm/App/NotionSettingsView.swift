@@ -65,7 +65,7 @@ struct NotionSettingsView: View {
                             Spacer()
                             Image(systemName: "arrow.up.right").foregroundStyle(.secondary)
                         }
-                        .padding(.vertical, 4).contentShape(Rectangle())
+                        .foregroundStyle(Color.primary).padding(.vertical, 4).contentShape(Rectangle())
                     }.buttonStyle(.borderless)
                     Link(destination: CreatorLinks.patreon) {
                         HStack(spacing: 12) {
@@ -77,13 +77,13 @@ struct NotionSettingsView: View {
                             }
                             Spacer()
                             Image(systemName: "arrow.up.right").foregroundStyle(.secondary)
-                        }.padding(.vertical, 4).contentShape(Rectangle())
+                        }.foregroundStyle(Color.primary).padding(.vertical, 4).contentShape(Rectangle())
                     }.buttonStyle(.borderless)
                     FeedbackButton()
                     DisclosureGroup("👋 About the developer") {
                         Text("PencilNotes is an independent open-source project by Morsalin Islam. Feedback and contributions are welcome. Support is optional; the app stays free and open source.")
                     }
-                    Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.2")")
+                    Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.3")")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 if model.isBusy { Section { ProgressView(model.progress) } }

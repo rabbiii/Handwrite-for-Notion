@@ -82,7 +82,7 @@ def generate():
             "SUPPORTS_MACCATALYST": "NO", "CODE_SIGN_STYLE": "Automatic", "DEVELOPMENT_TEAM": "",
             "GENERATE_INFOPLIST_FILE": "NO", "INFOPLIST_FILE": "$(SRCROOT)/Info.plist",
             "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks"],
-            "CURRENT_PROJECT_VERSION": "212", "MARKETING_VERSION": "2.1.2", "SWIFT_EMIT_LOC_STRINGS": "YES",
+            "CURRENT_PROJECT_VERSION": "213", "MARKETING_VERSION": "2.1.3", "SWIFT_EMIT_LOC_STRINGS": "YES",
             "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon", "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "AccentColor",
             "ENABLE_TESTABILITY": "YES" if name == "Debug" else "NO",
         }))

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.3
+
+- Set explicit adaptive text colors on GitHub, Patreon and feedback rows for readable links in light and dark appearances.
+
 ## 2.1.2
 
 - Added colorful accents to Home, Settings, setup instructions and note actions.
