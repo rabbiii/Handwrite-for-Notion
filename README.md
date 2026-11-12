@@ -93,4 +93,8 @@ No analytics or advertising SDK is included. Local saves use atomic replacement 
 
 [✉️ Send feedback](mailto:mar.rabbi40@gmail.com) → [🐛 Report an issue](https://github.com/rabbiii/Handwrite-for-Notion/issues) → [📋 Changelog](CHANGELOG.md)
 
+[❤️ Support PencilNotes on Patreon](https://www.patreon.com/MorsalinIslam)
+
+Optional support helps fund App Store membership and ongoing development. PencilNotes remains free and open source.
+
 Free and open source under the [MIT License](LICENSE). Commercial reuse is allowed under its terms. An independent project, unaffiliated with Apple or Notion.
