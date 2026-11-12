@@ -8,6 +8,11 @@ on:
         required: false
         type: string
         default: ''
+      publish_release:
+        description: 'Publish automatically after tests and build (disable to review screenshots first)'
+        required: false
+        type: boolean
+        default: true
   push:
     branches: [main]
     paths:
@@ -73,6 +78,7 @@ jobs:
 
   release:
     name: Release built IPA
+    if: github.event_name != 'workflow_dispatch' || inputs.publish_release
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10

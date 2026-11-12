@@ -96,7 +96,7 @@ struct NotionSettingsView: View {
                     DisclosureGroup("👋 About the developer") {
                         Text("PencilNotes is an independent open-source project by Morsalin Islam. Feedback and contributions are welcome. Support is optional; the app stays free and open source.")
                     }
-                    Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.2.1")")
+                    Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.2.2")")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 if model.isBusy { Section { ProgressView(model.progress) } }

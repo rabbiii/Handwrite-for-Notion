@@ -32,6 +32,7 @@ struct NoteEditorView: View {
                           })
                     .id("\(note.id.uuidString):\(page.id.uuidString)")
                     .ignoresSafeArea(edges: .bottom)
+                    .notebookBackgroundExtension()
 
                 VStack(alignment: .leading, spacing: 8) {
                     ScrollView(.horizontal, showsIndicators: true) {

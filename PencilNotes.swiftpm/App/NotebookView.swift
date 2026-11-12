@@ -103,7 +103,6 @@ struct NotebookView: View {
                 }
             }
             .animation(noteAnimation, value: model.selectedID)
-            .notebookBackgroundExtension()
             .overlay {
                 if isEditing {
                     Color.clear.contentShape(Rectangle()).ignoresSafeArea()

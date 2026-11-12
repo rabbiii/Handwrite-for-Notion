@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.2
+
+- Restricted the background extension to the canvas so drawing content reflects under the glass sidebar without duplicating the editor toolbar into the title area.
+
 ## 2.2.1
 
 - Added Restore All and confirmed Delete All Permanently actions in Recently Deleted, with visible storage errors.
