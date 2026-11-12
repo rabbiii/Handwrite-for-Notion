@@ -157,10 +157,15 @@ final class NoteRepository {
     /// sync state is cleared so restoring a backup cannot overwrite Notion ink.
     func importBackup(_ data: Data) throws -> Note {
         var note = try decode(data, expectedID: nil)
+        if note.iconName == nil {
+            let legacyIcons = ["book.closed", "pencil", "paintbrush", "lightbulb", "leaf", "star", "moon", "sun.max", "bolt", "sparkles", "heart", "paperplane"]
+            note.iconName = legacyIcons[Int(note.id.uuid.0) % legacyIcons.count]
+        }
         note.id = UUID()
         note.revision = UUID()
         note.createdAt = Date()
         note.updatedAt = note.createdAt
+        note.deletedAt = nil
         note.destination = nil
         note.sync = nil
         return note

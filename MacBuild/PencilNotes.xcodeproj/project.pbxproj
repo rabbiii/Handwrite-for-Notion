@@ -6,182 +6,204 @@
 	};
 	"objectVersion" = 56;
 	"objects" = {
-		"19603164314464AE5D696B64" = {
+		"D4624745B46839B1B40C4803" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
 			"path" = "AppModel.swift";
 			"sourceTree" = "<group>";
 		};
-		"7851EC214CE3675CFE2A3E14" = {
+		"9E8B2BAFB414E1F2C55E649F" = {
 			"isa" = "PBXBuildFile";
-			"fileRef" = "19603164314464AE5D696B64";
+			"fileRef" = "D4624745B46839B1B40C4803";
 		};
-		"4DAA375C300853A8DE3B4A06" = {
+		"82B2B373A31EEFA12FD9B1BA" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
 			"path" = "InkCanvas.swift";
 			"sourceTree" = "<group>";
 		};
-		"EAFB3CDA1C0BB48044EB1DDC" = {
+		"233DC19460A1BC972117604C" = {
 			"isa" = "PBXBuildFile";
-			"fileRef" = "4DAA375C300853A8DE3B4A06";
+			"fileRef" = "82B2B373A31EEFA12FD9B1BA";
 		};
-		"E3292361DA19AE48658DD226" = {
+		"9AE10AF22101AEB7A16E0E04" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
 			"path" = "KeychainStore.swift";
 			"sourceTree" = "<group>";
 		};
-		"C46105ABB244ACF9B5C1FBBD" = {
+		"AF3D534824B171E2FF0998BF" = {
 			"isa" = "PBXBuildFile";
-			"fileRef" = "E3292361DA19AE48658DD226";
+			"fileRef" = "9AE10AF22101AEB7A16E0E04";
 		};
-		"CD22B04A6F20D8C2FA6FD48C" = {
-			"isa" = "PBXFileReference";
-			"lastKnownFileType" = "sourcecode.swift";
-			"path" = "NoteEditorView.swift";
-			"sourceTree" = "<group>";
-		};
-		"CB8A6EA1FF1E088E08946BEC" = {
-			"isa" = "PBXBuildFile";
-			"fileRef" = "CD22B04A6F20D8C2FA6FD48C";
-		};
-		"073383342403D86033A61687" = {
-			"isa" = "PBXFileReference";
-			"lastKnownFileType" = "sourcecode.swift";
-			"path" = "NoteExporter.swift";
-			"sourceTree" = "<group>";
-		};
-		"2E1BAD9C1D73BCFD51D9E679" = {
-			"isa" = "PBXBuildFile";
-			"fileRef" = "073383342403D86033A61687";
-		};
-		"3041B3B343643A91B55B4B6C" = {
+		"7F7F52A9FBCC870A0A2BAEFE" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
 			"path" = "NotebookView.swift";
 			"sourceTree" = "<group>";
 		};
-		"A00869981746F4873BAB9F40" = {
+		"E6BE4FCB125AA91F7214E04C" = {
 			"isa" = "PBXBuildFile";
-			"fileRef" = "3041B3B343643A91B55B4B6C";
+			"fileRef" = "7F7F52A9FBCC870A0A2BAEFE";
 		};
-		"46A98F736939451FD106F5CA" = {
+		"96D732E486EB99EA8CFD38D6" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "NoteEditorView.swift";
+			"sourceTree" = "<group>";
+		};
+		"6F854850373B278CCEB00002" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "96D732E486EB99EA8CFD38D6";
+		};
+		"C4E97236CAE7C162A08743DA" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "NoteExporter.swift";
+			"sourceTree" = "<group>";
+		};
+		"B8C5CC0C232B1880D71CBE25" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "C4E97236CAE7C162A08743DA";
+		};
+		"0523ADB0F51FAC07766A43FC" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "NoteIcons.swift";
+			"sourceTree" = "<group>";
+		};
+		"9231D9AB25A873B8EB08FBBB" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "0523ADB0F51FAC07766A43FC";
+		};
+		"00F910A72A9A3133A3BE7885" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
 			"path" = "NotionSettingsView.swift";
 			"sourceTree" = "<group>";
 		};
-		"1F9E6D72DBBBEEB3CB1841AE" = {
+		"AC9E3E66E238047C5287657F" = {
 			"isa" = "PBXBuildFile";
-			"fileRef" = "46A98F736939451FD106F5CA";
+			"fileRef" = "00F910A72A9A3133A3BE7885";
 		};
-		"5ED4CD2D415FB7B4406E361E" = {
+		"96DE05C5DC991797D10E167B" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
 			"path" = "PencilNotesApp.swift";
 			"sourceTree" = "<group>";
 		};
-		"D130CA4275A387075DF39A8F" = {
+		"37F4F640AB2BC9D155EF5347" = {
 			"isa" = "PBXBuildFile";
-			"fileRef" = "5ED4CD2D415FB7B4406E361E";
+			"fileRef" = "96DE05C5DC991797D10E167B";
 		};
-		"0B84DC8553BC431F3E478363" = {
+		"1C1A1DEF74ED695990BAFD30" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "RecentlyDeletedView.swift";
+			"sourceTree" = "<group>";
+		};
+		"670B833D138D96272EB9BD13" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "1C1A1DEF74ED695990BAFD30";
+		};
+		"92EF128F6D84555230C7F4A6" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
 			"path" = "Theme.swift";
 			"sourceTree" = "<group>";
 		};
-		"F1D93ED41FF2A2E6B34EDEC2" = {
+		"AA081830EF9F29C968F67ED3" = {
 			"isa" = "PBXBuildFile";
-			"fileRef" = "0B84DC8553BC431F3E478363";
+			"fileRef" = "92EF128F6D84555230C7F4A6";
 		};
 		"0D04BFEB7D64B71C74FC925C" = {
 			"isa" = "PBXGroup";
 			"children" = (
-				"19603164314464AE5D696B64",
-				"4DAA375C300853A8DE3B4A06",
-				"E3292361DA19AE48658DD226",
-				"CD22B04A6F20D8C2FA6FD48C",
-				"073383342403D86033A61687",
-				"3041B3B343643A91B55B4B6C",
-				"46A98F736939451FD106F5CA",
-				"5ED4CD2D415FB7B4406E361E",
-				"0B84DC8553BC431F3E478363",
+				"D4624745B46839B1B40C4803",
+				"82B2B373A31EEFA12FD9B1BA",
+				"9AE10AF22101AEB7A16E0E04",
+				"7F7F52A9FBCC870A0A2BAEFE",
+				"96D732E486EB99EA8CFD38D6",
+				"C4E97236CAE7C162A08743DA",
+				"0523ADB0F51FAC07766A43FC",
+				"00F910A72A9A3133A3BE7885",
+				"96DE05C5DC991797D10E167B",
+				"1C1A1DEF74ED695990BAFD30",
+				"92EF128F6D84555230C7F4A6",
 			);
 			"name" = "App";
 			"path" = "../PencilNotes.swiftpm/App";
 			"sourceTree" = "<group>";
 		};
-		"2BA59D1EE3176DEBD7938AAC" = {
+		"A1A047D69BA47169C11813CE" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
 			"path" = "AutoSyncDebouncer.swift";
 			"sourceTree" = "<group>";
 		};
-		"A738B59C16FE44B5B87EC92F" = {
+		"E4997F5EFAEE65647EAD13B2" = {
 			"isa" = "PBXBuildFile";
-			"fileRef" = "2BA59D1EE3176DEBD7938AAC";
+			"fileRef" = "A1A047D69BA47169C11813CE";
 		};
-		"F240E530F5A8CED8DCA07A61" = {
+		"1384376423DD95C4EAB89B98" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
 			"path" = "CanvasGeometry.swift";
 			"sourceTree" = "<group>";
 		};
-		"A3A90F1E815586D5AC223785" = {
+		"3CE1672E3E3C2067CB5EABCA" = {
 			"isa" = "PBXBuildFile";
-			"fileRef" = "F240E530F5A8CED8DCA07A61";
+			"fileRef" = "1384376423DD95C4EAB89B98";
 		};
-		"2260BE782319C9470B33EE68" = {
+		"46AADE78FE8BF8F348ED78C7" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
 			"path" = "Models.swift";
 			"sourceTree" = "<group>";
 		};
-		"BE43A9B0827B784797B983E8" = {
+		"A1FB1D9C1CAB0CBF0B89B7A7" = {
 			"isa" = "PBXBuildFile";
-			"fileRef" = "2260BE782319C9470B33EE68";
+			"fileRef" = "46AADE78FE8BF8F348ED78C7";
 		};
-		"C4660DC389A1B2042ABE17FC" = {
+		"B364EA512700653050BA9945" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
 			"path" = "NoteRepository.swift";
 			"sourceTree" = "<group>";
 		};
-		"B87300F5B811BA46EC577B92" = {
+		"E917E4872BCFBF9BB1673494" = {
 			"isa" = "PBXBuildFile";
-			"fileRef" = "C4660DC389A1B2042ABE17FC";
+			"fileRef" = "B364EA512700653050BA9945";
 		};
-		"87B8DB324F3C7F7B83549069" = {
+		"3C37FD5A8749C9C5E53033A5" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
 			"path" = "NotionClient.swift";
 			"sourceTree" = "<group>";
 		};
-		"19A104F1B9859A4A8A9932FD" = {
+		"6E31EFAB24063993C5782F92" = {
 			"isa" = "PBXBuildFile";
-			"fileRef" = "87B8DB324F3C7F7B83549069";
+			"fileRef" = "3C37FD5A8749C9C5E53033A5";
 		};
-		"8EBC9EC4BDB7230A3CFD8E14" = {
+		"2760542E6517959317E05171" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
 			"path" = "SyncCoordinator.swift";
 			"sourceTree" = "<group>";
 		};
-		"150CCAA7E40F1583081BB19C" = {
+		"6BBDFBB0C436AAA74F1ABBF7" = {
 			"isa" = "PBXBuildFile";
-			"fileRef" = "8EBC9EC4BDB7230A3CFD8E14";
+			"fileRef" = "2760542E6517959317E05171";
 		};
 		"70EA1983C983DEACC1B61805" = {
 			"isa" = "PBXGroup";
 			"children" = (
-				"2BA59D1EE3176DEBD7938AAC",
-				"F240E530F5A8CED8DCA07A61",
-				"2260BE782319C9470B33EE68",
-				"C4660DC389A1B2042ABE17FC",
-				"87B8DB324F3C7F7B83549069",
-				"8EBC9EC4BDB7230A3CFD8E14",
+				"A1A047D69BA47169C11813CE",
+				"1384376423DD95C4EAB89B98",
+				"46AADE78FE8BF8F348ED78C7",
+				"B364EA512700653050BA9945",
+				"3C37FD5A8749C9C5E53033A5",
+				"2760542E6517959317E05171",
 			);
 			"name" = "Core";
 			"path" = "../PencilNotes.swiftpm/Core";
@@ -225,21 +247,23 @@
 			"isa" = "PBXSourcesBuildPhase";
 			"buildActionMask" = 2147483647;
 			"files" = (
-				"7851EC214CE3675CFE2A3E14",
-				"EAFB3CDA1C0BB48044EB1DDC",
-				"C46105ABB244ACF9B5C1FBBD",
-				"CB8A6EA1FF1E088E08946BEC",
-				"2E1BAD9C1D73BCFD51D9E679",
-				"A00869981746F4873BAB9F40",
-				"1F9E6D72DBBBEEB3CB1841AE",
-				"D130CA4275A387075DF39A8F",
-				"F1D93ED41FF2A2E6B34EDEC2",
-				"A738B59C16FE44B5B87EC92F",
-				"A3A90F1E815586D5AC223785",
-				"BE43A9B0827B784797B983E8",
-				"B87300F5B811BA46EC577B92",
-				"19A104F1B9859A4A8A9932FD",
-				"150CCAA7E40F1583081BB19C",
+				"9E8B2BAFB414E1F2C55E649F",
+				"233DC19460A1BC972117604C",
+				"AF3D534824B171E2FF0998BF",
+				"E6BE4FCB125AA91F7214E04C",
+				"6F854850373B278CCEB00002",
+				"B8C5CC0C232B1880D71CBE25",
+				"9231D9AB25A873B8EB08FBBB",
+				"AC9E3E66E238047C5287657F",
+				"37F4F640AB2BC9D155EF5347",
+				"670B833D138D96272EB9BD13",
+				"AA081830EF9F29C968F67ED3",
+				"E4997F5EFAEE65647EAD13B2",
+				"3CE1672E3E3C2067CB5EABCA",
+				"A1FB1D9C1CAB0CBF0B89B7A7",
+				"E917E4872BCFBF9BB1673494",
+				"6E31EFAB24063993C5782F92",
+				"6BBDFBB0C436AAA74F1ABBF7",
 			);
 			"runOnlyForDeploymentPostprocessing" = 0;
 		};
@@ -299,8 +323,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				"CURRENT_PROJECT_VERSION" = "2";
-				"MARKETING_VERSION" = "1.1";
+				"CURRENT_PROJECT_VERSION" = "211";
+				"MARKETING_VERSION" = "2.1.1";
 				"SWIFT_EMIT_LOC_STRINGS" = "YES";
 				"ASSETCATALOG_COMPILER_APPICON_NAME" = "AppIcon";
 				"ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME" = "AccentColor";
@@ -339,8 +363,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				"CURRENT_PROJECT_VERSION" = "2";
-				"MARKETING_VERSION" = "1.1";
+				"CURRENT_PROJECT_VERSION" = "211";
+				"MARKETING_VERSION" = "2.1.1";
 				"SWIFT_EMIT_LOC_STRINGS" = "YES";
 				"ASSETCATALOG_COMPILER_APPICON_NAME" = "AppIcon";
 				"ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME" = "AccentColor";

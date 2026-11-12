@@ -68,6 +68,9 @@ struct Note: Codable, Identifiable, Equatable {
     var destination: NotionPage?
     var sync: SyncState?
     /// Absent in legacy paged files; version 2 is one continuous drawing.
+    var iconName: String?
+    var isPinned: Bool?
+    var deletedAt: Date?
     var canvasVersion: Int?
 
     init(title: String = "Untitled note") {

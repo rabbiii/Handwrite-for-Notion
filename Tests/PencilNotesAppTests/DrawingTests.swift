@@ -130,6 +130,32 @@ final class DrawingTests: XCTestCase {
         XCTAssertEqual(reopened.notes.first?.title, note.title)
     }
 
+    func testTrashRestoreAndPersonalizationPersistAcrossLaunches() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let model = AppModel(directory: directory, loadCredential: false)
+        model.newNote()
+        let id = try XCTUnwrap(model.selectedID)
+        let page = try XCTUnwrap(model.selectedPage)
+        let drawing = ink(y: 200).dataRepresentation()
+        model.drawingChanged(drawing, pageID: page.id)
+        model.setIcon("leaf", for: id)
+        model.togglePin(id)
+        model.deleteNote(id)
+        let reopened = AppModel(directory: directory, loadCredential: false)
+        XCTAssertTrue(reopened.notes.isEmpty)
+        XCTAssertEqual(reopened.deletedNotes.first?.pages.first?.drawing, drawing)
+        reopened.restoreDeleted(id)
+        XCTAssertEqual(reopened.notes.first?.iconName, "leaf")
+        XCTAssertEqual(reopened.notes.first?.isPinned, true)
+        XCTAssertTrue(reopened.deletedNotes.isEmpty)
+        reopened.deleteNote(id)
+        reopened.permanentlyDelete(id)
+        let final = AppModel(directory: directory, loadCredential: false)
+        XCTAssertTrue(final.notes.isEmpty)
+        XCTAssertTrue(final.deletedNotes.isEmpty)
+    }
+
     func testSidebarActionsKeepTheirTargetWhenSelectionChanges() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }

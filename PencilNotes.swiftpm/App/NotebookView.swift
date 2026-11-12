@@ -5,6 +5,9 @@ import UIKit
 struct NotebookView: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var search = ""
+    @AppStorage("noteSort") private var sort = "Updated"
+    @State private var showingTrash = false
     @State private var showingSettings = false
     @State private var importingBackup = false
     @State private var preferredColumn: NavigationSplitViewColumn = .detail
@@ -38,8 +41,19 @@ struct NotebookView: View {
                     }.buttonStyle(.borderedProminent).tint(.primary).foregroundStyle(NotebookTheme.surface).padding()
                 }
             }
+            .searchable(text: $search, prompt: "Search notes")
             .navigationTitle("PencilNotes")
             .toolbar {
+                ToolbarItem(placement: .bottomBar) {
+                    Menu("Library", systemImage: "line.3.horizontal.decrease") {
+                        Picker("Sort", selection: $sort) {
+                            Text("Last updated").tag("Updated")
+                            Text("Title").tag("Title")
+                            Text("Date created").tag("Created")
+                        }
+                        Button("Recently Deleted", systemImage: "trash") { showingTrash = true }
+                    }
+                }
                 ToolbarItem(placement: .topBarLeading) {
                     Button { showingSettings = true } label: { Image(systemName: "gearshape") }
                         .accessibilityLabel("Notion settings")
@@ -106,6 +120,7 @@ struct NotebookView: View {
                 }.padding(30).frame(maxWidth: 380).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22)).shadow(radius: 15)
             }
         }
+        .sheet(isPresented: $showingTrash) { RecentlyDeletedView() }
         .sheet(isPresented: $showingSettings) { NotionSettingsView() }
         .sheet(item: $model.sharePayload) { payload in ShareSheet(files: payload.files) }
         .alert("Rename note", isPresented: $renaming, presenting: noteToRename) { note in
@@ -113,7 +128,7 @@ struct NotebookView: View {
             Button("Save") { model.rename(titleDraft, noteID: note.id) }
             Button("Cancel", role: .cancel) {}
         }
-        .confirmationDialog("Delete this note and its local recovery copies? Its Notion image will remain.",
+        .confirmationDialog("Move this note to Recently Deleted? Its Notion image will remain.",
                             isPresented: $deleting, titleVisibility: .visible, presenting: noteToDelete) { note in
             Button("Delete note", role: .destructive) { model.deleteNote(note.id) }
                 .disabled(model.isSyncing)
@@ -125,7 +140,7 @@ struct NotebookView: View {
                 withAnimation(noteAnimation) { bulkSelection.subtract(model.deleteNotes(notesToDelete)) }
             }.disabled(model.isSyncing)
         } message: {
-            Text("Local notes and recovery copies will be deleted. Notion images stay on their pages.")
+            Text("Notes can be restored from Recently Deleted. Notion images stay on their pages.")
         }
         .fileImporter(isPresented: $importingBackup, allowedContentTypes: [.data, .json], allowsMultipleSelection: false) { result in
             do { if let url = try result.get().first { model.importBackup(url: url) } }
@@ -152,9 +167,17 @@ struct NotebookView: View {
         }
     }
 
+    private var visibleNotes: [Note] {
+        model.notes.filter { search.isEmpty || $0.title.localizedCaseInsensitiveContains(search) }.sorted {
+            if ($0.isPinned ?? false) != ($1.isPinned ?? false) { return $0.isPinned ?? false }
+            if sort == "Title" { return $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+            if sort == "Created" { return $0.createdAt > $1.createdAt }
+            return $0.updatedAt > $1.updatedAt
+        }
+    }
     private var noteList: some View {
         List {
-            ForEach(model.notes) { note in
+            ForEach(visibleNotes) { note in
                 NoteSidebarRow(note: note, isSelected: model.selectedID == note.id && !isEditing, isEditing: isEditing,
                                isBulkSelected: bulkSelection.contains(note.id),
                                onSelect: {
@@ -166,6 +189,9 @@ struct NotebookView: View {
                                    }
                                },
                                onClose: { withAnimation(noteAnimation) { model.closeNote() } })
+                    .contextMenu {
+                        Button(note.isPinned == true ? "Unpin" : "Pin", systemImage: "pin") { model.togglePin(note.id) }
+                    }
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
@@ -194,8 +220,8 @@ struct NotebookView: View {
         VStack(spacing: 10) {
             Text("\(bulkSelection.count) selected").font(.caption).foregroundStyle(.secondary)
             HStack {
-                Button("Select All") { bulkSelection = Set(model.notes.map(\.id)) }
-                    .disabled(bulkSelection.count == model.notes.count)
+                Button("Select All") { bulkSelection = Set(visibleNotes.map(\.id)) }
+                    .disabled(visibleNotes.allSatisfy { bulkSelection.contains($0.id) })
                 Spacer()
                 Button("Unselect All") { bulkSelection.removeAll() }.disabled(bulkSelection.isEmpty)
             }.buttonStyle(.bordered)
@@ -241,13 +267,10 @@ private struct NoteSidebarRow: View {
     let isSelected: Bool
     let isEditing: Bool
     let isBulkSelected: Bool
+    @EnvironmentObject private var model: AppModel
+    @State private var pickingIcon = false
     let onSelect: () -> Void
     let onClose: () -> Void
-
-    private static let icons = [
-        "book.closed", "pencil", "paintbrush", "lightbulb", "leaf", "star",
-        "moon", "sun.max", "bolt", "sparkles", "heart", "paperplane"
-    ]
 
     var body: some View {
         content
@@ -268,6 +291,16 @@ private struct NoteSidebarRow: View {
 
     private var content: some View {
         HStack(alignment: .center, spacing: 4) {
+            if !isEditing {
+                Button { pickingIcon = true } label: {
+                    AnimatedNoteIcon(name: NoteIcons.name(for: note), active: isSelected)
+                        .font(.title2).frame(width: 44, height: 44)
+                }.buttonStyle(.plain).accessibilityLabel("Change note icon")
+                    .popover(isPresented: $pickingIcon) {
+                        NoteIconPicker(selected: NoteIcons.name(for: note)) { model.setIcon($0, for: note.id) }
+                            .presentationCompactAdaptation(.sheet)
+                    }
+            }
             Button(action: onSelect) {
                 HStack(spacing: 12) {
                     if isEditing {
@@ -302,9 +335,8 @@ private struct NoteSidebarRow: View {
 
     private var noteLabel: some View {
         HStack(spacing: 12) {
-            // UUIDs are random and persisted, so icons stay stable across edits and launches.
-            Image(systemName: Self.icons[Int(note.id.uuid.0) % Self.icons.count])
-                .font(.title2).frame(width: 32).accessibilityHidden(true)
+            if isEditing { Image(systemName: NoteIcons.name(for: note)).font(.title2).frame(width: 32) }
+            if note.isPinned == true { Image(systemName: "pin.fill").font(.caption).accessibilityLabel("Pinned") }
             VStack(alignment: .leading, spacing: 6) {
                 Text(note.title).font(.headline).lineLimit(2)
                 Text(note.updatedAt.formatted(date: .abbreviated, time: .omitted))

@@ -18,6 +18,21 @@ final class StorageTests: XCTestCase {
         }
     }
 
+    func testPersonalizationAndTrashSurviveReopeningAndBackupImport() throws {
+        var note = Note(title: "Recoverable")
+        note.iconName = "leaf"
+        note.isPinned = true
+        note.deletedAt = Date()
+        try repository.save(note)
+        let loaded = try XCTUnwrap(repository.loadAll().notes.first)
+        XCTAssertEqual(loaded, note)
+        let restored = try repository.importBackup(repository.backupData(note))
+        XCTAssertEqual(restored.iconName, "leaf")
+        XCTAssertEqual(restored.isPinned, true)
+        XCTAssertNil(restored.deletedAt)
+        XCTAssertNotEqual(restored.id, note.id)
+    }
+
     func testRoundTripPreservesAllPagesMetadataAndEditableBytes() throws {
         var note = Note(title: "Calculus — ∫ f(x) dx")
         note.pages = [

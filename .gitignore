@@ -5,3 +5,5 @@
 xcuserdata/
 dist/
 __pycache__/
+
+*.log

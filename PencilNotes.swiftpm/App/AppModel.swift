@@ -9,6 +9,7 @@ struct SharePayload: Identifiable {
 
 @MainActor
 final class AppModel: ObservableObject {
+    @Published private(set) var deletedNotes: [Note] = []
     @Published private(set) var notes: [Note] = []
     @Published private(set) var selectedID: UUID?
     @Published var pageIndex = 0
@@ -61,7 +62,8 @@ final class AppModel: ObservableObject {
             repository = repo
             let result = repo.loadAll()
             storageIssues = result.issues
-            for original in result.notes {
+            deletedNotes = result.notes.filter { $0.deletedAt != nil }
+            for original in result.notes where original.deletedAt == nil {
                 do {
                     try NoteExporter.validate(original)
                     let note = try NoteExporter.continuous(original)
@@ -90,7 +92,8 @@ final class AppModel: ObservableObject {
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.timeZone = .current
         formatter.dateFormat = "dd MMM yy  HH:mm:ss"
-        let note = Note(title: formatter.string(from: Date()))
+        var note = Note(title: formatter.string(from: Date()))
+        note.iconName = NoteIcons.all.randomElement()
         do {
             try persist(note)
             notes.insert(note, at: 0)
@@ -157,7 +160,10 @@ final class AppModel: ObservableObject {
         do {
             guard let repository else { throw storageUnavailable }
             for note in notes.filter({ ids.contains($0.id) }) {
-                try repository.delete(note.id)
+                var archived = note
+                archived.deletedAt = Date()
+                try repository.save(archived)
+                deletedNotes.append(archived)
                 dirty.remove(note.id)
                 pendingAutoSync.remove(note.id)
                 notes.removeAll { $0.id == note.id }
@@ -173,6 +179,29 @@ final class AppModel: ObservableObject {
             if let next = notes.first { select(next.id) }
         }
         return deleted
+    }
+
+    func setIcon(_ icon: String, for id: UUID) {
+        updateMetadata(id) { $0.iconName = icon }
+    }
+    func togglePin(_ id: UUID) {
+        updateMetadata(id) { $0.isPinned = !($0.isPinned ?? false) }
+    }
+    private func updateMetadata(_ id: UUID, edit: (inout Note) -> Void) {
+        guard !isBusy, saveNow(), let index = notes.firstIndex(where: { $0.id == id }) else { return }
+        var note = notes[index]
+        edit(&note)
+        do { try persist(note); notes[index] = note } catch { report(error) }
+    }
+    func restoreDeleted(_ id: UUID) {
+        guard !isBusy, let index = deletedNotes.firstIndex(where: { $0.id == id }) else { return }
+        var note = deletedNotes[index]
+        note.deletedAt = nil
+        do { try persist(note); notes.insert(note, at: 0); deletedNotes.remove(at: index) } catch { report(error) }
+    }
+    func permanentlyDelete(_ id: UUID) {
+        guard !isBusy, let repository else { return }
+        do { try repository.delete(id); deletedNotes.removeAll { $0.id == id } } catch { report(error) }
     }
 
     func chooseDestination(_ destination: NotionPage) {

@@ -43,6 +43,19 @@ struct NotionSettingsView: View {
                 Section("Your data") {
                     Text("Notes stay on this iPad. Sync sends a PNG and title to Notion. Export backups to keep editable ink.")
                 }
+                Section("About & Support") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Made with \u{2764}\u{FE0F} by Morsalin Islam").font(.headline)
+                        Text("A small notebook for your next big idea.").foregroundStyle(.secondary)
+                        Link("GitHub", destination: URL(string: "https://github.com/rabbiii/Handwrite-for-Notion")!)
+                        Link("Send feedback", destination: URL(string: "mailto:mar.rabbi40@gmail.com?subject=PencilNotes%20feedback")!)
+                        DisclosureGroup("About the developer") {
+                            Text("PencilNotes is an independent open-source project by Morsalin Islam. Feedback and contributions are welcome.")
+                        }
+                        Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.1")")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }.padding(.vertical, 8)
+                }
                 if model.isBusy { Section { ProgressView(model.progress) } }
                 if let message = model.errorMessage {
                     Section { ErrorBanner(message: message) { model.errorMessage = nil } }
