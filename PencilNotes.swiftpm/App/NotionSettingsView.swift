@@ -6,6 +6,7 @@ struct NotionSettingsView: View {
     @Environment(\.openURL) private var openURL
     @State private var token = ""
     @AppStorage("dottedPaperEnabled") private var dottedPaper = false
+    @ScaledMetric(relativeTo: .caption) private var notionLogoSize: CGFloat = 18
     var body: some View {
         NavigationStack {
             Form {
@@ -23,9 +24,9 @@ struct NotionSettingsView: View {
                         Task { if await model.connect(token: token) { token = "" } }
                     }.disabled(token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 } footer: {
-                    Text("🔐 Token stored securely in Keychain.")
+                    Text("Token stored securely in Keychain.")
                 }
-                Section("🧭 Notion setup") {
+                Section {
                     VStack(spacing: 12) {
                         integrationStep("🛠️ Create internal integration", detail: "Choose your workspace", showsLink: true)
                         Image(systemName: "arrow.down")
@@ -40,6 +41,18 @@ struct NotionSettingsView: View {
                     }
                     .padding(.vertical, 8)
                     Text("Search shows connected pages.").font(.footnote)
+                } header: {
+                    Label {
+                        Text("Notion setup")
+                    } icon: {
+                        Image("NotionMark")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: notionLogoSize, height: notionLogoSize)
+                            .foregroundStyle(Color.primary)
+                            .accessibilityHidden(true)
+                    }
                 }
                 Section {
                     Toggle(isOn: $dottedPaper) {
@@ -83,7 +96,7 @@ struct NotionSettingsView: View {
                     DisclosureGroup("👋 About the developer") {
                         Text("PencilNotes is an independent open-source project by Morsalin Islam. Feedback and contributions are welcome. Support is optional; the app stays free and open source.")
                     }
-                    Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.3")")
+                    Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.2.1")")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 if model.isBusy { Section { ProgressView(model.progress) } }

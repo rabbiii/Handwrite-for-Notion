@@ -73,7 +73,13 @@ Use **Dotted paper** in the editor or **Settings → Canvas** for subtle writing
 
 Find **Support** beside Settings, or open **Settings → About & Support** for Patreon, GitHub and email feedback. Support is optional. The creator emoji cycles while the app is active and respects Reduce Motion.
 
-In **Edit** mode, tap rows to select notes. Use Select All, Unselect All, or Delete. Tap outside the sidebar to finish.
+Open the sidebar's **•••** button for **Search notes**, **Edit notes**, and **Restore Backup**. Search stays active after the popover closes; an orange dot on the button indicates a filter. Clear the search inside the popover to show all notes again.
+
+In **Edit** mode, tap rows to select notes. Use Select All, Unselect All, Actions, or Delete. Tap outside the sidebar or choose **••• → Done selecting** to finish. Swipe a note left for the glass Rename and Delete buttons.
+
+The sidebar uses a fixed 350-point width when space allows. Starting to draw or scroll the canvas hides it; use the sidebar toggle to bring it back. Tap the compact note title or its pencil icon to rename the note.
+
+**Library → Recently Deleted** includes **Restore All** and **Delete All Permanently**. Permanent deletion requires confirmation and removes local recovery copies; it leaves Notion images unchanged.
 
 ## 🔗 Send handwriting to Notion
 

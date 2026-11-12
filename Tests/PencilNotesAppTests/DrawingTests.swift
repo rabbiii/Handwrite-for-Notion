@@ -349,6 +349,36 @@ final class DrawingTests: XCTestCase {
         XCTAssertEqual(changes, priorChanges, "Paper preferences must not trigger saves or Notion uploads.")
     }
 
+    func testRecentlyDeletedLightAndDarkAppearance() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let model = AppModel(directory: directory, loadCredential: false)
+        for title in ["Meeting sketches", "A place to think"] {
+            model.newNote()
+            model.rename(title)
+            model.deleteSelected()
+        }
+        XCTAssertEqual(model.deletedNotes.count, 2)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 768, height: 1024))
+        window.windowScene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+        window.rootViewController = UIHostingController(rootView: RecentlyDeletedView().environmentObject(model).tint(NotebookTheme.ink))
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true }
+        for (name, style) in [("light", UIUserInterfaceStyle.light), ("dark", .dark)] {
+            window.overrideUserInterfaceStyle = style
+            window.rootViewController?.view.setNeedsLayout()
+            window.rootViewController?.view.layoutIfNeeded()
+            try await Task.sleep(nanoseconds: 500_000_000)
+            let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+                window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+            }
+            let attachment = XCTAttachment(image: image)
+            attachment.name = "Recently Deleted \(name)"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+    }
+
     func testHomeSettingsAndDottedPaperAppearances() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }

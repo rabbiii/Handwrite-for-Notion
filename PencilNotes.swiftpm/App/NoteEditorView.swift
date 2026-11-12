@@ -2,6 +2,7 @@ import SwiftUI
 
 struct NoteEditorView: View {
     let noteID: UUID
+    var onCanvasInteractionBegan: () -> Void = {}
     @EnvironmentObject private var model: AppModel
     @StateObject private var canvasActions = CanvasActions()
     @State private var fingerDrawing = false
@@ -15,13 +16,20 @@ struct NoteEditorView: View {
     @AppStorage("dottedPaperEnabled") private var dottedPaper = false
 
     private var note: Note? { model.notes.first { $0.id == noteID } }
+    private var validTitleDraft: Bool {
+        let title = titleDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !title.isEmpty && title.count <= 200
+    }
     var body: some View {
         if let note, let page = note.pages.first {
             ZStack(alignment: .top) {
                 Color(uiColor: NotebookTheme.canvasBackground).ignoresSafeArea()
                 InkCanvas(drawingData: page.drawing, fingerDrawing: fingerDrawing, dottedPaper: dottedPaper, actions: canvasActions,
                           changed: { model.drawingChanged($0, pageID: page.id) },
-                          interaction: { model.canvasInteraction($0) })
+                          interaction: { active in
+                              model.canvasInteraction(active)
+                              if active { onCanvasInteractionBegan() }
+                          })
                     .id("\(note.id.uuidString):\(page.id.uuidString)")
                     .ignoresSafeArea(edges: .bottom)
 
@@ -37,7 +45,7 @@ struct NoteEditorView: View {
                                     .background(fingerDrawing ? Color.primary.opacity(0.1) : .clear, in: Capsule())
                             }.accessibilityLabel("Draw with finger").accessibilityValue(fingerDrawing ? "On" : "Off")
                             tool("Clear canvas", "eraser") { clearingCanvas = true }
-                            tool("💾 Save", "checkmark.circle") { model.saveNow() }
+                            tool("Save", "checkmark.circle") { model.saveNow() }
                             Toggle(isOn: $dottedPaper) {
                                 Label("Dotted paper", systemImage: "circle.grid.3x3")
                             }
@@ -66,7 +74,7 @@ struct NoteEditorView: View {
                             }.accessibilityIdentifier("autoSyncButton")
                                 .accessibilityValue(model.autoSyncEnabled ? "On" : "Off")
                             Menu {
-                                Button("Rename note", systemImage: "pencil") { titleDraft = note.title; renaming = true }
+                                Button("Rename note", systemImage: "pencil") { beginRenaming(note) }
                                 if note.sync?.pendingMarker != nil {
                                     Button("Resolve uncertain sync", systemImage: "questionmark.circle") { resolvingSync = true }
                                 } else if note.sync?.blockID != nil {
@@ -86,21 +94,44 @@ struct NoteEditorView: View {
                         .padding(.horizontal, 12).padding(.vertical, 6)
                         .background(.ultraThinMaterial, in: Capsule())
                         .allowsHitTesting(false)
-                }.padding(.horizontal, 12).padding(.top, 8)
+                }.padding(.horizontal, 12)
             }
             .navigationTitle(note.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Button { beginRenaming(note) } label: {
+                        HStack(spacing: 6) {
+                            Text(note.title)
+                                .font(.subheadline.weight(.semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                            Image(systemName: "pencil")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                        .foregroundStyle(Color.primary)
+                        .frame(maxWidth: 240)
+                    }
+                    .notebookGlassButtons()
+                    .controlSize(.small)
+                    .frame(minHeight: 44)
+                    .accessibilityLabel("Rename note: \(note.title)")
+                    .accessibilityHint("Opens the note title editor")
+                    .accessibilityIdentifier("renameTitleButton")
+                }
+            }
             .sheet(isPresented: $choosingPage) { DestinationPicker() }
             .alert("Rename note", isPresented: $renaming) {
                 TextField("Title", text: $titleDraft)
-                Button("Save") { model.rename(titleDraft) }
+                Button("Save") { model.rename(titleDraft, noteID: noteID) }
+                    .disabled(!validTitleDraft)
                 Button("Cancel", role: .cancel) {}
             }
             .confirmationDialog("Clear every stroke? You can undo this while this note stays open.", isPresented: $clearingCanvas, titleVisibility: .visible) {
                 Button("Clear canvas", role: .destructive) { canvasActions.clear() }
             }
-            .confirmationDialog("Delete this note and its local recovery copies? Its Notion image will remain.", isPresented: $deletingNote, titleVisibility: .visible) {
+            .confirmationDialog("Move this note to Recently Deleted? Its Notion image will remain.", isPresented: $deletingNote, titleVisibility: .visible) {
                 Button("Delete note", role: .destructive) { model.deleteSelected() }.disabled(model.isSyncing)
             }
             .confirmationDialog("Inspect the original destination in Notion first. Only reset this attempt if its PencilNotes block is absent; a delayed response can otherwise cause a duplicate.", isPresented: $resolvingSync, titleVisibility: .visible) {
@@ -111,6 +142,11 @@ struct NoteEditorView: View {
             }
         }
     }
+    private func beginRenaming(_ note: Note) {
+        titleDraft = note.title
+        renaming = true
+    }
+
     private var separator: some View { Divider().frame(height: 22).padding(.horizontal, 2) }
     private func tool(_ title: String, _ icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {

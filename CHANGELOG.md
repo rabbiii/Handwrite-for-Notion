@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.2.1
+
+- Added Restore All and confirmed Delete All Permanently actions in Recently Deleted, with visible storage errors.
+- Applied Liquid Glass to deleted-note controls, the selection panel, the welcome New Note button, sidebar surfaces and custom swipe actions, with material fallbacks on older iPadOS versions.
+- Aligned bulk-selection controls in equal columns and moved Search, Edit and Restore Backup into a dedicated three-dot popover.
+- Set the sidebar's minimum, preferred and maximum widths to 350 points and hide it when drawing or scrolling the canvas, using an overlay layout to avoid resizing ink mid-stroke.
+- Added a compact, tappable title for renaming and corrected the editor's deletion message to describe Recently Deleted.
+- Replaced the Notion setup compass with a scalable Notion logo that adapts to light and dark appearances.
+
 ## 2.1.3
 
 - Set explicit adaptive text colors on GitHub, Patreon and feedback rows for readable links in light and dark appearances.
