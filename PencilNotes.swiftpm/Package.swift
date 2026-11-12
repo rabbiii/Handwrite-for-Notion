@@ -11,13 +11,13 @@ let package = Package(
             targets: ["AppModule"],
             bundleIdentifier: "app.pencilnotes.personal",
             teamIdentifier: "",
-            displayVersion: "1.0",
-            bundleVersion: "1",
-            appIcon: .placeholder(icon: .star),
-            accentColor: .presetColor(.blue),
+            displayVersion: "1.1",
+            bundleVersion: "2",
+            appIcon: .asset("AppIcon"),
+            accentColor: .asset("AccentColor"),
             supportedDeviceFamilies: [.pad],
             supportedInterfaceOrientations: [.portrait, .landscapeLeft, .landscapeRight]
         )
     ],
-    targets: [.executableTarget(name: "AppModule", path: ".")]
+    targets: [.executableTarget(name: "AppModule", path: ".", resources: [.process("Resources")])]
 )

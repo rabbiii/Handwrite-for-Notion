@@ -86,6 +86,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "5ED4CD2D415FB7B4406E361E";
 		};
+		"0B84DC8553BC431F3E478363" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Theme.swift";
+			"sourceTree" = "<group>";
+		};
+		"F1D93ED41FF2A2E6B34EDEC2" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "0B84DC8553BC431F3E478363";
+		};
 		"0D04BFEB7D64B71C74FC925C" = {
 			"isa" = "PBXGroup";
 			"children" = (
@@ -97,10 +107,31 @@
 				"3041B3B343643A91B55B4B6C",
 				"46A98F736939451FD106F5CA",
 				"5ED4CD2D415FB7B4406E361E",
+				"0B84DC8553BC431F3E478363",
 			);
 			"name" = "App";
 			"path" = "../PencilNotes.swiftpm/App";
 			"sourceTree" = "<group>";
+		};
+		"2BA59D1EE3176DEBD7938AAC" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "AutoSyncDebouncer.swift";
+			"sourceTree" = "<group>";
+		};
+		"A738B59C16FE44B5B87EC92F" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "2BA59D1EE3176DEBD7938AAC";
+		};
+		"F240E530F5A8CED8DCA07A61" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "CanvasGeometry.swift";
+			"sourceTree" = "<group>";
+		};
+		"A3A90F1E815586D5AC223785" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "F240E530F5A8CED8DCA07A61";
 		};
 		"2260BE782319C9470B33EE68" = {
 			"isa" = "PBXFileReference";
@@ -145,6 +176,8 @@
 		"70EA1983C983DEACC1B61805" = {
 			"isa" = "PBXGroup";
 			"children" = (
+				"2BA59D1EE3176DEBD7938AAC",
+				"F240E530F5A8CED8DCA07A61",
 				"2260BE782319C9470B33EE68",
 				"C4660DC389A1B2042ABE17FC",
 				"87B8DB324F3C7F7B83549069",
@@ -165,6 +198,7 @@
 			"isa" = "PBXGroup";
 			"children" = (
 				"A8792157CB4F27FB949C035F",
+				"E7F08BCC397888750F5CB9BD",
 			);
 			"name" = "Products";
 			"sourceTree" = "<group>";
@@ -180,8 +214,10 @@
 			"children" = (
 				"0D04BFEB7D64B71C74FC925C",
 				"70EA1983C983DEACC1B61805",
+				"8BF729FFE074CAEE622C0292",
 				"06271BAF49532C879AA3C58B",
 				"0A3E27B8CA818264D75C8D81",
+				"59830EBC3A4184110566BF1A",
 			);
 			"sourceTree" = "<group>";
 		};
@@ -197,6 +233,9 @@
 				"A00869981746F4873BAB9F40",
 				"1F9E6D72DBBBEEB3CB1841AE",
 				"D130CA4275A387075DF39A8F",
+				"F1D93ED41FF2A2E6B34EDEC2",
+				"A738B59C16FE44B5B87EC92F",
+				"A3A90F1E815586D5AC223785",
 				"BE43A9B0827B784797B983E8",
 				"B87300F5B811BA46EC577B92",
 				"19A104F1B9859A4A8A9932FD",
@@ -211,10 +250,21 @@
 			);
 			"runOnlyForDeploymentPostprocessing" = 0;
 		};
+		"8BF729FFE074CAEE622C0292" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "folder.assetcatalog";
+			"path" = "../PencilNotes.swiftpm/Resources/Assets.xcassets";
+			"sourceTree" = "<group>";
+		};
+		"999FF37E9C5A0FFB78E1CDE2" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "8BF729FFE074CAEE622C0292";
+		};
 		"41D311A605520FC7B8B9A980" = {
 			"isa" = "PBXResourcesBuildPhase";
 			"buildActionMask" = 2147483647;
 			"files" = (
+				"999FF37E9C5A0FFB78E1CDE2",
 			);
 			"runOnlyForDeploymentPostprocessing" = 0;
 		};
@@ -249,9 +299,12 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				"CURRENT_PROJECT_VERSION" = "1";
-				"MARKETING_VERSION" = "1.0";
+				"CURRENT_PROJECT_VERSION" = "2";
+				"MARKETING_VERSION" = "1.1";
 				"SWIFT_EMIT_LOC_STRINGS" = "YES";
+				"ASSETCATALOG_COMPILER_APPICON_NAME" = "AppIcon";
+				"ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME" = "AccentColor";
+				"ENABLE_TESTABILITY" = "YES";
 			};
 		};
 		"07CA1E69F6068DEA30A4DA6B" = {
@@ -286,9 +339,12 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				"CURRENT_PROJECT_VERSION" = "1";
-				"MARKETING_VERSION" = "1.0";
+				"CURRENT_PROJECT_VERSION" = "2";
+				"MARKETING_VERSION" = "1.1";
 				"SWIFT_EMIT_LOC_STRINGS" = "YES";
+				"ASSETCATALOG_COMPILER_APPICON_NAME" = "AppIcon";
+				"ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME" = "AccentColor";
+				"ENABLE_TESTABILITY" = "NO";
 			};
 		};
 		"DF833A3E44B2D81665609F6A" = {
@@ -352,6 +408,114 @@
 			"projectRoot" = "";
 			"targets" = (
 				"34A04005BCAF206EEC990BD9",
+				"E5B4A42C1A9B11F842B19C64",
+			);
+		};
+		"43A9FD84D6E062DA80EBD6C0" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "DrawingTests.swift";
+			"sourceTree" = "<group>";
+		};
+		"BAC9CFE73333E6D35D8A9433" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "43A9FD84D6E062DA80EBD6C0";
+		};
+		"59830EBC3A4184110566BF1A" = {
+			"isa" = "PBXGroup";
+			"children" = (
+				"43A9FD84D6E062DA80EBD6C0",
+			);
+			"name" = "AppTests";
+			"path" = "../Tests/PencilNotesAppTests";
+			"sourceTree" = "<group>";
+		};
+		"E7F08BCC397888750F5CB9BD" = {
+			"isa" = "PBXFileReference";
+			"explicitFileType" = "wrapper.cfbundle";
+			"includeInIndex" = 0;
+			"path" = "PencilNotesAppTests.xctest";
+			"sourceTree" = "BUILT_PRODUCTS_DIR";
+		};
+		"798B65A4B63A4D08FDD4C755" = {
+			"isa" = "PBXSourcesBuildPhase";
+			"buildActionMask" = 2147483647;
+			"files" = (
+				"BAC9CFE73333E6D35D8A9433",
+			);
+			"runOnlyForDeploymentPostprocessing" = 0;
+		};
+		"EED42B306EA79F6209CD6D71" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Debug";
+			"buildSettings" = {
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "app.pencilnotes.personal.tests";
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"TARGETED_DEVICE_FAMILY" = "2";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"TEST_HOST" = "$(BUILT_PRODUCTS_DIR)/PencilNotes.app/PencilNotes";
+				"BUNDLE_LOADER" = "$(TEST_HOST)";
+				"LD_RUNPATH_SEARCH_PATHS" = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+			};
+		};
+		"6914045718AD66A56C999E76" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Release";
+			"buildSettings" = {
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "app.pencilnotes.personal.tests";
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"TARGETED_DEVICE_FAMILY" = "2";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"TEST_HOST" = "$(BUILT_PRODUCTS_DIR)/PencilNotes.app/PencilNotes";
+				"BUNDLE_LOADER" = "$(TEST_HOST)";
+				"LD_RUNPATH_SEARCH_PATHS" = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+			};
+		};
+		"5FA394EFD07597E96CACD8E1" = {
+			"isa" = "XCConfigurationList";
+			"buildConfigurations" = (
+				"EED42B306EA79F6209CD6D71",
+				"6914045718AD66A56C999E76",
+			);
+			"defaultConfigurationIsVisible" = 0;
+			"defaultConfigurationName" = "Debug";
+		};
+		"25A640B699F944DC77F1F1FE" = {
+			"isa" = "PBXContainerItemProxy";
+			"containerPortal" = "244210E48437B6556980A702";
+			"proxyType" = 1;
+			"remoteGlobalIDString" = "34A04005BCAF206EEC990BD9";
+			"remoteInfo" = "PencilNotes";
+		};
+		"25E506C77AE10A94A633D071" = {
+			"isa" = "PBXTargetDependency";
+			"target" = "34A04005BCAF206EEC990BD9";
+			"targetProxy" = "25A640B699F944DC77F1F1FE";
+		};
+		"E5B4A42C1A9B11F842B19C64" = {
+			"isa" = "PBXNativeTarget";
+			"name" = "PencilNotesAppTests";
+			"productName" = "PencilNotesAppTests";
+			"productReference" = "E7F08BCC397888750F5CB9BD";
+			"productType" = "com.apple.product-type.bundle.unit-test";
+			"buildConfigurationList" = "5FA394EFD07597E96CACD8E1";
+			"buildPhases" = (
+				"798B65A4B63A4D08FDD4C755",
+			);
+			"buildRules" = (
+			);
+			"dependencies" = (
+				"25E506C77AE10A94A633D071",
 			);
 		};
 	};

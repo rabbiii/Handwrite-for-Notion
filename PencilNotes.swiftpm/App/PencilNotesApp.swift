@@ -9,7 +9,7 @@ struct PencilNotesApp: App {
         WindowGroup {
             NotebookView()
                 .environmentObject(model)
-                .tint(.teal)
+                .tint(NotebookTheme.ink)
                 .onChange(of: scenePhase) { _, phase in
                     if phase != .active { model.saveNow() }
                 }

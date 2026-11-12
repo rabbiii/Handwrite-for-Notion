@@ -19,15 +19,15 @@ struct NotebookView: View {
                         ForEach(model.notes) { note in
                             Button { model.select(note.id) } label: {
                                 HStack(alignment: .top, spacing: 12) {
-                                    Image(systemName: "doc.text").font(.title2).foregroundStyle(.teal)
+                                    Image(systemName: "doc.text").font(.title2).foregroundStyle(.primary)
                                         .frame(width: 32, height: 42)
                                     VStack(alignment: .leading, spacing: 6) {
                                         Text(note.title).font(.headline).foregroundStyle(.primary).lineLimit(2)
-                                        Text("\(note.pages.count) \(note.pages.count == 1 ? "page" : "pages") · \(note.updatedAt.formatted(date: .abbreviated, time: .omitted))")
+                                        Text(note.updatedAt.formatted(date: .abbreviated, time: .omitted))
                                             .font(.caption).foregroundStyle(.secondary)
                                     }
                                     Spacer(minLength: 0)
-                                    if model.selectedID == note.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(.teal) }
+                                    if model.selectedID == note.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(.primary) }
                                 }.padding(.vertical, 7)
                             }.buttonStyle(.plain)
                         }
@@ -35,7 +35,7 @@ struct NotebookView: View {
                 }
                 Button { model.newNote() } label: {
                     Label("New Note", systemImage: "plus").frame(maxWidth: .infinity).padding(.vertical, 6)
-                }.buttonStyle(.borderedProminent).padding()
+                }.buttonStyle(.borderedProminent).tint(.primary).padding()
             }
             .navigationTitle("PencilNotes")
             .toolbar {
@@ -61,6 +61,7 @@ struct NotebookView: View {
                 }
             }
         }
+        .background(NotebookTheme.surface)
         .allowsHitTesting(!model.isBusy)
         .onChange(of: model.selectedID) { _, id in
             preferredColumn = id == nil ? .sidebar : .detail
@@ -98,10 +99,10 @@ struct ErrorBanner: View {
     let dismiss: () -> Void
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.primary)
             Text(message).font(.callout).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
             Button(action: dismiss) { Image(systemName: "xmark.circle.fill") }.accessibilityLabel("Dismiss message")
-        }.padding().background(.orange.opacity(0.12))
+        }.padding().background(.regularMaterial)
     }
 }
 

@@ -32,7 +32,7 @@ struct NotionSettingsView: View {
                 }
                 Section("Your data") {
                     Text("Notes and original strokes are stored on this iPad. Export an Editable Backup to Files or iCloud Drive before deleting the app or changing its project identity.")
-                    Text("Sync sends only the selected note’s title and exported PNG/PDF to api.notion.com. It does not enable two-way handwriting editing or upload your editable backup.")
+                    Text("Sync sends only the selected note’s title and exported image to api.notion.com. It does not enable two-way handwriting editing or upload your editable backup.")
                 }
                 if model.isBusy { Section { ProgressView(model.progress) } }
                 if let message = model.errorMessage {

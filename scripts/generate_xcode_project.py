@@ -57,7 +57,11 @@ def generate():
     main = add("main", "PBXGroup", children=[*groups, info, products], sourceTree="<group>")
     sources = add("sources", "PBXSourcesBuildPhase", buildActionMask=2147483647, files=build_files, runOnlyForDeploymentPostprocessing=0)
     frameworks = add("frameworks", "PBXFrameworksBuildPhase", buildActionMask=2147483647, files=[], runOnlyForDeploymentPostprocessing=0)
-    resources = add("resources", "PBXResourcesBuildPhase", buildActionMask=2147483647, files=[], runOnlyForDeploymentPostprocessing=0)
+    catalog = add("assets", "PBXFileReference", lastKnownFileType="folder.assetcatalog",
+                  path="../PencilNotes.swiftpm/Resources/Assets.xcassets", sourceTree="<group>")
+    objects[main]["children"].insert(2, catalog)
+    resources = add("resources", "PBXResourcesBuildPhase", buildActionMask=2147483647,
+                    files=[add("build:assets", "PBXBuildFile", fileRef=catalog)], runOnlyForDeploymentPostprocessing=0)
 
     project_configs = []
     target_configs = []
@@ -78,7 +82,9 @@ def generate():
             "SUPPORTS_MACCATALYST": "NO", "CODE_SIGN_STYLE": "Automatic", "DEVELOPMENT_TEAM": "",
             "GENERATE_INFOPLIST_FILE": "NO", "INFOPLIST_FILE": "$(SRCROOT)/Info.plist",
             "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks"],
-            "CURRENT_PROJECT_VERSION": "1", "MARKETING_VERSION": "1.0", "SWIFT_EMIT_LOC_STRINGS": "YES",
+            "CURRENT_PROJECT_VERSION": "2", "MARKETING_VERSION": "1.1", "SWIFT_EMIT_LOC_STRINGS": "YES",
+            "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon", "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "AccentColor",
+            "ENABLE_TESTABILITY": "YES" if name == "Debug" else "NO",
         }))
     project_list = add("project_configs", "XCConfigurationList", buildConfigurations=project_configs,
                        defaultConfigurationIsVisible=0, defaultConfigurationName="Release")
@@ -92,6 +98,32 @@ def generate():
                   buildConfigurationList=project_list, compatibilityVersion="Xcode 14.0", developmentRegion="en",
                   hasScannedForEncodings=0, knownRegions=["en", "Base"], mainGroup=main, productRefGroup=products,
                   projectDirPath="", projectRoot="", targets=[target])
+    test_files = []
+    test_refs = []
+    for path in sorted((ROOT / "Tests/PencilNotesAppTests").glob("*.swift")):
+        ref = add("test:" + path.name, "PBXFileReference", lastKnownFileType="sourcecode.swift", path=path.name, sourceTree="<group>")
+        test_refs.append(ref)
+        test_files.append(add("testbuild:" + path.name, "PBXBuildFile", fileRef=ref))
+    test_group = add("tests", "PBXGroup", children=test_refs, name="AppTests", path="../Tests/PencilNotesAppTests", sourceTree="<group>")
+    objects[main]["children"].append(test_group)
+    test_product = add("testproduct", "PBXFileReference", explicitFileType="wrapper.cfbundle", includeInIndex=0, path="PencilNotesAppTests.xctest", sourceTree="BUILT_PRODUCTS_DIR")
+    objects[products]["children"].append(test_product)
+    test_sources = add("testsources", "PBXSourcesBuildPhase", buildActionMask=2147483647, files=test_files, runOnlyForDeploymentPostprocessing=0)
+    test_configs = []
+    for name in ["Debug", "Release"]:
+        test_configs.append(add("testconfig:" + name, "XCBuildConfiguration", name=name, buildSettings={
+            "PRODUCT_NAME": "$(TARGET_NAME)", "PRODUCT_BUNDLE_IDENTIFIER": "app.pencilnotes.personal.tests",
+            "GENERATE_INFOPLIST_FILE": "YES", "TARGETED_DEVICE_FAMILY": "2", "CODE_SIGN_STYLE": "Automatic",
+            "TEST_HOST": "$(BUILT_PRODUCTS_DIR)/PencilNotes.app/PencilNotes", "BUNDLE_LOADER": "$(TEST_HOST)",
+            "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks", "@loader_path/Frameworks"],
+        }))
+    test_list = add("testconfigs", "XCConfigurationList", buildConfigurations=test_configs, defaultConfigurationIsVisible=0, defaultConfigurationName="Debug")
+    proxy = add("testproxy", "PBXContainerItemProxy", containerPortal=project, proxyType=1, remoteGlobalIDString=target, remoteInfo="PencilNotes")
+    dependency = add("testdependency", "PBXTargetDependency", target=target, targetProxy=proxy)
+    test_target = add("testtarget", "PBXNativeTarget", name="PencilNotesAppTests", productName="PencilNotesAppTests",
+                      productReference=test_product, productType="com.apple.product-type.bundle.unit-test",
+                      buildConfigurationList=test_list, buildPhases=[test_sources], buildRules=[], dependencies=[dependency])
+    objects[project]["targets"].append(test_target)
     contents = {"archiveVersion": 1, "classes": {}, "objectVersion": 56, "objects": objects, "rootObject": project}
     PROJECT.mkdir(parents=True, exist_ok=True)
     (PROJECT / "project.pbxproj").write_text("// !$*UTF8*$!\n" + openstep(contents) + "\n")
@@ -106,6 +138,10 @@ def generate():
                       BuildableName="PencilNotes.app", BlueprintName="PencilNotes", ReferencedContainer="container:PencilNotes.xcodeproj")
 
     reference(entry)
+    test_action = ET.SubElement(scheme, "TestAction", buildConfiguration="Debug", selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB", selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB", shouldUseLaunchSchemeArgsEnv="YES")
+    testable = ET.SubElement(ET.SubElement(test_action, "Testables"), "TestableReference", skipped="NO")
+    ET.SubElement(testable, "BuildableReference", BuildableIdentifier="primary", BlueprintIdentifier=test_target,
+                  BuildableName="PencilNotesAppTests.xctest", BlueprintName="PencilNotesAppTests", ReferencedContainer="container:PencilNotes.xcodeproj")
     launch = ET.SubElement(scheme, "LaunchAction", buildConfiguration="Debug", selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB",
                            selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB", launchStyle="0", useCustomWorkingDirectory="NO",
                            ignoresPersistentStateOnLaunch="NO", debugDocumentVersioning="YES", allowLocationSimulation="YES")

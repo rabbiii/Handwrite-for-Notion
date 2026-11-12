@@ -1,7 +1,7 @@
 import Foundation
 
 /// Editable PencilKit data is opaque to the persistence layer. An empty Data
-/// value represents a new, blank PKDrawing. Each page is 768 × 1024 points.
+/// value represents a new, blank PKDrawing. Old paged notes are migrated on iPad.
 struct NotePage: Codable, Identifiable, Equatable {
     var id: UUID
     var drawing: Data
@@ -64,6 +64,8 @@ struct Note: Codable, Identifiable, Equatable {
     var pages: [NotePage]
     var destination: NotionPage?
     var sync: SyncState?
+    /// Absent in legacy paged files; version 2 is one continuous drawing.
+    var canvasVersion: Int?
 
     init(title: String = "Untitled note") {
         let now = Date()
@@ -75,5 +77,15 @@ struct Note: Codable, Identifiable, Equatable {
         self.pages = [NotePage()]
         self.destination = nil
         self.sync = nil
+        self.canvasVersion = 2
+    }
+}
+
+extension Note {
+    /// A completed upload must never replace newer local content with its snapshot.
+    func withSyncState(_ state: SyncState?) -> Note {
+        var copy = self
+        copy.sync = state
+        return copy
     }
 }
