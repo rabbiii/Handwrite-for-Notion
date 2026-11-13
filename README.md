@@ -14,6 +14,12 @@ Write on iPad. Keep editable ink locally. Send an image to Notion.
 
 </div>
 
+## 📸 See PencilNotes in action
+
+[![PencilNotes screenshots showing the welcome screen, notes library, drawing in dark and light modes, Notion connection settings, and a handwritten note synced to Notion](Assets/SS.png)](Assets/SS.png)
+
+*Click the image to view the screenshots at full resolution.*
+
 ## 💡 Capture → organize → share
 
 [![Support PencilNotes on Patreon](https://img.shields.io/badge/Support_PencilNotes-Patreon-FF424D?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/MorsalinIslam)
